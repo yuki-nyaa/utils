@@ -1,0 +1,8 @@
+# The file for me to test the library.
+test.cpp
+
+# Executables
+*.exe
+
+# Build directory
+build

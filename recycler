@@ -1,0 +1,28 @@
+template<typename...>
+struct conjunction : std::true_type {};
+
+template<typename B1>
+struct conjunction<B1> : std::conditional_t<bool(B1::value),std::true_type,std::false_type> {};
+
+template<typename B1, typename... Bn>
+struct conjunction<B1, Bn...> : std::conditional_t<bool(B1::value), conjunction<Bn...>, std::false_type> {};
+
+template<typename... Bs>
+inline constexpr bool conjunction_v = yuki::conjunction<Bs...>::value;
+
+
+template<typename...>
+struct disjunction : std::false_type {};
+
+template<typename B1>
+struct disjunction<B1> : std::conditional_t<bool(B1::value),std::true_type,std::false_type> {};
+
+template<typename B1, typename... Bn>
+struct disjunction<B1, Bn...> : std::conditional_t<bool(B1::value), std::true_type, disjunction<Bn...>> {};
+
+template<typename... Bs>
+inline constexpr bool disjunction_v = yuki::disjunction<Bs...>::value;
+
+
+template<typename B>
+struct negation : std::bool_constant<!bool(B::value)> {};
