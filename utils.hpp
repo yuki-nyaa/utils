@@ -4,10 +4,6 @@
 #include<type_traits>
 #include<memory>
 
-#if defined(DEBUG) && !defined(NDEBUG)
-#define YUKI_DBGOUT(message) std::cout<<"\n"<<"YUKI_DBGOUT: "<<message<<std::endl
-#endif
-
 namespace yuki{
     // You may find this rather pointless. The story is that sometimes I want to inhibit IMPLICIT derived-to-base conversion while permitting EXPLICIT cast. So I decide to inherit privately (or protectedly) and befriend (some instances of) this function to achieve the effect. Since `static_cast` is a KEYWORD and not a normal identifier such as `std::static_cast`, the spelling is changed.
     template<typename T,typename S>
@@ -159,11 +155,12 @@ namespace yuki{
         }
     }
 
-    inline void print_space(std::ostream& o){ o<<std::endl; }
-    template<typename T,typename... Ts>
+    template<char sep = ' '>
+    void print_space(std::ostream& o){ o<<std::endl; }
+    template<char sep = ' ', typename T,typename... Ts>
     void print_space(std::ostream& o, const T& message1, const Ts&... messages){
-        o<<message1<<" ";
-        print_space(o,messages...);
+        o<<message1<<sep;
+        print_space<sep>(o,messages...);
     }
 
     namespace err{
@@ -195,9 +192,8 @@ namespace yuki{
         ignore(args...);
     }
 
-    // Note: although no explicit move semantics is used, `r` is in fact moved. So don't attempt to access `r` after the cast. After all, `std::unique_ptr` cannot be copied, so I decide to design it this way to save one `std::move`.
     template<typename T,typename U >
-    std::unique_ptr<T> static_pointer_cast(std::unique_ptr<U>& r){
+    std::unique_ptr<T> static_pointer_cast(std::unique_ptr<U>&& r){
         return std::unique_ptr<T>(statik_kast<typename std::unique_ptr<T>::element_type*>(r.release()));
     }
 }
