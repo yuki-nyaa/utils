@@ -3,6 +3,7 @@
 #include<string>
 #include<type_traits>
 #include<memory>
+#include<limits>
 
 namespace yuki{
     // You may find this rather pointless. The story is that sometimes I want to inhibit IMPLICIT derived-to-base conversion while permitting EXPLICIT cast. So I decide to inherit privately (or protectedly) and befriend (some instances of) this function to achieve the effect. Since `static_cast` is a KEYWORD and not a normal identifier such as `std::static_cast`, the spelling is changed.
@@ -17,7 +18,7 @@ namespace yuki{ // Concepts
     template<typename T>
     concept Reference = std::is_reference_v<T>;
 }
-namespace yuki{ // Type traits
+namespace yuki{ // Type traits and other compile-time facilities.
     template<typename T,typename U,typename... Vs>
     struct is_same : std::conditional_t<yuki::is_same<T,Vs...>::value && yuki::is_same<T,U>::value, std::true_type, std::false_type> {};
 
@@ -137,6 +138,62 @@ namespace yuki{ // Type traits
     struct type_to_num : type_to_num_helper_<0,T,Us...> {};
     template<typename T,typename... Us>
     inline constexpr size_t type_to_num_v = type_to_num<T,Us...>::value;
+
+    // Automatically chooses the smallest type to hold a given value.
+    // Note that the built-in `auto` and `decltype` deduction facilities only deduce types bigger than `(unsigned) int`.
+    // Also note that this is different from `uint_least8_t` or `boost::uint_t<N>::least` which take the number of bits as argument.
+    template<unsigned long long a>
+    struct uint_auto_helper_{
+        static constexpr unsigned char s_char = (a<=std::numeric_limits<unsigned char>::max()) ? 1 : 0;
+        static constexpr unsigned char s_short = (a<=std::numeric_limits<unsigned short>::max()) ? 1 : 0;
+        static constexpr unsigned char s_int = (a<=std::numeric_limits<unsigned int>::max()) ? 1 : 0;
+        static constexpr unsigned char s_long = (a<=std::numeric_limits<unsigned long>::max()) ? 1 : 0;
+        static constexpr unsigned char s_llong = (a<=std::numeric_limits<unsigned long long>::max()) ? 1 : 0;
+        static constexpr unsigned char flag = s_char+s_short+s_int+s_long+s_llong;
+    };
+
+    template<unsigned long long a,unsigned char flag = uint_auto_helper_<a>::flag>
+    struct uint_auto;
+    template<unsigned long long a>
+    struct uint_auto<a,1> {typedef unsigned long long type;};
+    template<unsigned long long a>
+    struct uint_auto<a,2> {typedef unsigned long type;};
+    template<unsigned long long a>
+    struct uint_auto<a,3> {typedef unsigned int type;};
+    template<unsigned long long a>
+    struct uint_auto<a,4> {typedef unsigned short type;};
+    template<unsigned long long a>
+    struct uint_auto<a,5> {typedef unsigned char type;};
+
+    template<unsigned long long a>
+    using uint_auto_t = typename uint_auto<a>::type;
+
+
+    template<long long a>
+    struct int_auto_helper_{
+        static constexpr unsigned char s_char = (a<=std::numeric_limits<signed char>::max() && a>=std::numeric_limits<signed char>::lowest()) ? 1 : 0;
+        static constexpr unsigned char s_short = (a<=std::numeric_limits<short>::max() && a>=std::numeric_limits<short>::lowest()) ? 1 : 0;
+        static constexpr unsigned char s_int = (a<=std::numeric_limits<int>::max() && a>=std::numeric_limits<int>::lowest()) ? 1 : 0;
+        static constexpr unsigned char s_long = (a<=std::numeric_limits<long>::max() && a>=std::numeric_limits<long>::lowest()) ? 1 : 0;
+        static constexpr unsigned char s_llong = (a<=std::numeric_limits<long long>::max() && a>=std::numeric_limits<long long>::lowest()) ? 1 : 0;
+        static constexpr unsigned char flag = s_char+s_short+s_int+s_long+s_llong;
+    };
+
+    template<long long a,unsigned char flag = int_auto_helper_<a>::flag>
+    struct int_auto;
+    template<long long a>
+    struct int_auto<a,1> {typedef long long type;};
+    template<long long a>
+    struct int_auto<a,2> {typedef long type;};
+    template<long long a>
+    struct int_auto<a,3> {typedef int type;};
+    template<long long a>
+    struct int_auto<a,4> {typedef short type;};
+    template<long long a>
+    struct int_auto<a,5> {typedef signed char type;};
+
+    template<long long a>
+    using int_auto_t = typename int_auto<a>::type;
 }
 
 // From James Adkison in https://stackoverflow.com/questions/11421432/how-can-i-output-the-value-of-an-enum-class-in-c11
