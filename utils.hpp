@@ -4,6 +4,7 @@
 #include<type_traits>
 #include<memory>
 #include<limits>
+#include<functional>
 
 namespace yuki{
     // You may find this rather pointless. The story is that sometimes I want to inhibit IMPLICIT derived-to-base conversion while permitting EXPLICIT cast. So I decide to inherit privately (or protectedly) and befriend (some instances of) this function to achieve the effect. Since `static_cast` is a KEYWORD and not a normal identifier such as `std::static_cast`, the spelling is changed.
@@ -253,4 +254,16 @@ namespace yuki{
     std::unique_ptr<T> static_pointer_cast(std::unique_ptr<U>&& r){
         return std::unique_ptr<T>(statik_kast<typename std::unique_ptr<T>::element_type*>(r.release()));
     }
+}
+
+namespace yuki{
+    // To be specialized for rough compare.
+    template<typename T>
+    struct rough_less{
+        constexpr bool operator()(const T& lhs,const T& rhs) const {return lhs<rhs;}
+    };
+    template<typename T>
+    struct rough_greater{
+        constexpr bool operator()(const T& lhs,const T& rhs) const {return lhs>rhs;}
+    };
 }
