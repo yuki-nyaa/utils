@@ -5,11 +5,51 @@
 #include<memory>
 #include<limits>
 #include<functional>
+namespace yuki{
+    template<typename T>
+    T declval_iden() noexcept;
 
+    template<typename T, typename... Args>
+    static auto has_operator_delete_helper_(int) -> decltype(void(T::operator delete(declval_iden<Args>()...)), std::true_type{});
+    template<typename T, typename... Args>
+    static auto has_operator_delete_helper_(long) -> std::false_type;
+    template<typename T, typename... Args>
+    struct has_operator_delete : decltype(has_operator_delete_helper_<T,Args...>(0)) {};
+    template<typename T, typename... Args>
+    inline constexpr bool has_operator_delete_v = has_operator_delete<T,Args...>::value;
+
+    template<typename T, typename... Args>
+    static auto has_operator_delete_a_helper_(int) -> decltype(void(T::operator delete[](declval_iden<Args>()...)), std::true_type{});
+    template<typename T, typename... Args>
+    static auto has_operator_delete_a_helper_(long) -> std::false_type;
+    template<typename T, typename... Args>
+    struct has_operator_delete_a : decltype(has_operator_delete_a_helper_<T,Args...>(0)) {};
+    template<typename T, typename... Args>
+    inline constexpr bool has_operator_delete_a_v = has_operator_delete_a<T,Args...>::value;
+}
 namespace yuki{
     // You may find this rather pointless. The story is that sometimes I want to inhibit IMPLICIT derived-to-base conversion while permitting EXPLICIT cast. So I decide to inherit privately (or protectedly) and befriend (some instances of) this function to achieve the effect. Since `static_cast` is a KEYWORD and not a normal identifier such as `std::static_cast`, the spelling is changed.
     template<typename T,typename S>
     constexpr T statik_kast(S&& s){ return static_cast<T>(std::forward<S>(s)); }
+
+    template<typename T_out,typename T_in,typename... PArgs>
+    inline void static_delete(T_in*& ptr,PArgs&&... pargs){
+        static_cast<T_out*>(ptr)->T_out::~T_out(); // From [class.virtual] : Explicit qualiﬁcation with the scope operator (7.5.4.3) suppresses the virtual call mechanism.
+        if constexpr(has_operator_delete_v<T_out,void*,decltype(std::forward<PArgs>(pargs))...>)
+            T_out::operator delete(ptr,std::forward<PArgs>(pargs)...);
+        else
+            ::operator delete(ptr,std::forward<PArgs>(pargs)...);
+        ptr=nullptr;
+    }
+    template<typename T_out,typename T_in,typename... PArgs>
+    inline void static_delete_a(T_in*& ptr,PArgs&&... pargs){
+        static_cast<T_out*>(ptr)->T_out::~T_out();
+        if constexpr(has_operator_delete_a_v<T_out,void*,decltype(std::forward<PArgs>(pargs))...>)
+            T_out::operator delete[](ptr,std::forward<PArgs>(pargs)...);
+        else
+            ::operator delete[](ptr,std::forward<PArgs>(pargs)...);
+        ptr=nullptr;
+    }
 }
 
 namespace yuki{ // Concepts
