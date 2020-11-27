@@ -6,17 +6,9 @@ namespace yuki{
         typename Equal = std::equal_to<Key>,
         typename Allocator = std::allocator<Key>
     >
-    struct multiset : protected std::multiset<Key,Compare,Allocator> {
+    struct multiset : private std::multiset<Key,Compare,Allocator> {
         private:
             typedef std::multiset<Key,Compare,Allocator> Base_;
-
-            template<typename C,typename T,typename=void>
-            struct has_is_transparent_ {};
-            template<typename C,typename T>
-            struct has_is_transparent_<C,T,yuki::void_t<typename C::is_transparent>> {typedef void type;};
-
-            template<typename C,typename T>
-            using has_is_transparent_t_ = typename has_is_transparent_<C,T>::type;
         public:
             using typename Base_::key_type;
             using typename Base_::value_type;
@@ -36,14 +28,17 @@ namespace yuki{
             using typename Base_::node_type;
             typedef Equal key_equal;
             typedef Equal value_equal;
+        protected:
+            Compare key_compare_;
             Equal key_equal_;
-
+            Allocator alloc_;
+        public:
             multiset() : multiset(Compare(),Equal()) {}
 
-            explicit multiset(const Compare& comp, const Equal& eq, const Allocator& alloc = Allocator()) : Base_(comp,alloc), key_equal_(eq) {}
+            explicit multiset(const Compare& comp, const Equal& eq, const Allocator& alloc = Allocator()) : Base_(comp,alloc),key_compare_(comp),key_equal_(eq),alloc_(alloc){}
 
             template<typename InputIterator>
-            multiset(InputIterator first, InputIterator last, const Compare& comp = Compare(), const Equal& eq = Equal(), const Allocator& alloc = Allocator()) : Base_(first,last,comp,alloc), key_equal_(eq) {}
+            multiset(InputIterator first, InputIterator last, const Compare& comp = Compare(), const Equal& eq = Equal(), const Allocator& alloc = Allocator()) : Base_(first,last,comp,alloc),key_compare_(comp),key_equal_(eq),alloc_(alloc) {}
 
             multiset(const multiset&) = default;
 
@@ -51,11 +46,11 @@ namespace yuki{
 
             explicit multiset(const Allocator& alloc) : multiset(Compare(),Equal(),alloc) {}
 
-            multiset(const multiset& other, const Allocator& alloc) : Base_(other,alloc), key_equal_(other.key_equal_) {}
+            multiset(const multiset& other, const Allocator& alloc) : Base_(other,alloc), key_equal_(other.key_equal_), alloc_(alloc) {}
 
-            multiset(multiset&& other, const Allocator& alloc) : Base_(other,alloc), key_equal_(other.key_equal_) {}
+            multiset(multiset&& other, const Allocator& alloc) : Base_(other,alloc), key_equal_(other.key_equal_), alloc_(alloc) {}
 
-            multiset(std::initializer_list<value_type> il, const Compare& comp = Compare(), const Equal& eq = Equal(), const Allocator& alloc = Allocator()) : Base_(il,comp,alloc), key_equal_(eq) {}
+            multiset(std::initializer_list<value_type> il, const Compare& comp = Compare(), const Equal& eq = Equal(), const Allocator& alloc = Allocator()) : Base_(il,comp,alloc), key_compare_(comp),key_equal_(eq),alloc_(alloc) {}
 
             template<typename InputIterator>
             multiset(InputIterator first, InputIterator last, const Allocator& alloc) : multiset(first,last,Compare(),Equal(),alloc) {}
@@ -94,14 +89,16 @@ namespace yuki{
             using Base_::extract;
 
             using Base_::erase;
-            size_type erase(const key_type& x);
+            size_type erase(const key_type& x) = delete;
 
             void swap(multiset& other)
                 noexcept(std::allocator_traits<Allocator>::is_always_equal::value && std::is_nothrow_swappable_v<Compare> && std::is_nothrow_swappable_v<Equal>)
             {
                 Base_::swap(other);
                 using std::swap;
+                swap(key_compare_,other.key_compare_);
                 swap(key_equal_,other.key_equal_);
+                swap(alloc_,other.alloc_);
             }
 
             using Base_::clear;
@@ -114,40 +111,43 @@ namespace yuki{
             key_equal key_eq() const {return key_equal_;}
             value_equal value_eq() const {return key_equal_;}
 
+            bool weak_equal(const Key& lhs, const Key& rhs){return !key_compare_(lhs,rhs) && !key_compare_(rhs,lhs);}
+            bool strong_equal(const Key& lhs, const Key& rhs){return key_equal_(lhs,rhs);}
+
             iterator find(const Key& key);
             const_iterator find(const Key& key) const;
-            template<typename K,typename = has_is_transparent_t_<Compare,K>>
+            template<typename K> requires requires{typename Compare::is_transparent;}
             iterator find(const K& key);
-            template<typename K,typename = has_is_transparent_t_<Compare,K>>
+            template<typename K> requires requires{typename Compare::is_transparent;}
             const_iterator find(const K& key) const;
 
             size_type count(const Key& key) const;
-            template<typename K,typename = has_is_transparent_t_<Compare,K>>
+            template<typename K> requires requires{typename Compare::is_transparent;}
             size_type count(const K& key) const;
 
             bool contains(const Key& key) const;
-            template<typename K,typename = has_is_transparent_t_<Compare,K>>
+            template<typename K> requires requires{typename Compare::is_transparent;}
             bool contains(const K& key) const;
 
             iterator lower_bound(const Key& key);
             const_iterator lower_bound(const Key& key) const;
-            template<typename K,typename = has_is_transparent_t_<Compare,K>>
+            template<typename K> requires requires{typename Compare::is_transparent;}
             iterator lower_bound(const K& key);
-            template<typename K,typename = has_is_transparent_t_<Compare,K>>
+            template<typename K> requires requires{typename Compare::is_transparent;}
             const_iterator lower_bound(const K& key) const;
 
             iterator upper_bound(const Key& key);
             const_iterator upper_bound(const Key& key) const;
-            template<typename K,typename = has_is_transparent_t_<Compare,K>>
+            template<typename K> requires requires{typename Compare::is_transparent;}
             iterator upper_bound(const K& key);
-            template<typename K,typename = has_is_transparent_t_<Compare,K>>
+            template<typename K> requires requires{typename Compare::is_transparent;}
             const_iterator upper_bound(const K& key) const;
 
             std::pair<iterator,iterator> equal_range(const Key& key);
             std::pair<const_iterator,const_iterator> equal_range(const Key& key) const;
-            template<typename K,typename = has_is_transparent_t_<Compare,K>>
+            template<typename K> requires requires{typename Compare::is_transparent;}
             std::pair<iterator,iterator> equal_range(const K& key);
-            template<typename K,typename = has_is_transparent_t_<Compare,K>>
+            template<typename K> requires requires{typename Compare::is_transparent;}
             std::pair<const_iterator,const_iterator> equal_range(const K& key) const;
     };
     template<typename Key,typename Compare,typename Equal,typename Allocator>

@@ -13,14 +13,6 @@ namespace yuki{ // Concepts
     concept Reference = std::is_reference_v<T>;
 }
 namespace yuki{ // Type traits and other compile-time facilities.
-    // For SFINAE uses :
-    template<typename... Ts>
-    struct true_type : std::true_type {};
-    template<typename... Ts>
-    struct false_type : std::false_type {};
-    template<typename... Ts>
-    struct void_t {typedef void type;};
-
     template<typename T,typename U,typename... Vs>
     struct is_same : std::conditional_t<yuki::is_same<T,Vs...>::value && yuki::is_same<T,U>::value, std::true_type, std::false_type> {};
 
@@ -199,31 +191,15 @@ namespace yuki{ // Type traits and other compile-time facilities.
 }
 
 namespace yuki{
-    template<typename T>
-    T declval_iden() noexcept;
-
-    template<typename T, typename... Args>
-    static auto has_operator_delete_helper_(int) -> decltype(void(T::operator delete(declval_iden<Args>()...)), std::true_type{});
-    template<typename T, typename... Args>
-    static auto has_operator_delete_helper_(long) -> std::false_type;
-    template<typename T, typename... Args>
-    struct has_operator_delete : decltype(has_operator_delete_helper_<T,Args...>(0)) {};
-    template<typename T, typename... Args>
-    inline constexpr bool has_operator_delete_v = has_operator_delete<T,Args...>::value;
-
-    template<typename T, typename... Args>
-    static auto has_operator_delete_a_helper_(int) -> decltype(void(T::operator delete[](declval_iden<Args>()...)), std::true_type{});
-    template<typename T, typename... Args>
-    static auto has_operator_delete_a_helper_(long) -> std::false_type;
-    template<typename T, typename... Args>
-    struct has_operator_delete_a : decltype(has_operator_delete_a_helper_<T,Args...>(0)) {};
-    template<typename T, typename... Args>
-    inline constexpr bool has_operator_delete_a_v = has_operator_delete_a<T,Args...>::value;
+    template<typename T,typename... Args>
+    concept Has_Operator_Delete = requires {T::operator delete(std::declval<Args>()...);};
+    template<typename T,typename... Args>
+    concept Has_Operator_Delete_A = requires {T::operator delete[](std::declval<Args>()...);};
 
     template<typename T_out,typename T_in,typename... PArgs>
     inline void static_delete(T_in*& ptr,PArgs&&... pargs){
         static_cast<T_out*>(ptr)->T_out::~T_out(); // From [class.virtual] : Explicit qualiﬁcation with the scope operator (7.5.4.3) suppresses the virtual call mechanism.
-        if constexpr(has_operator_delete_v<T_out,void*,decltype(std::forward<PArgs>(pargs))...>)
+        if constexpr(Has_Operator_Delete<T_out,void*,decltype(std::forward<PArgs>(pargs))...>)
             T_out::operator delete(ptr,std::forward<PArgs>(pargs)...);
         else
             ::operator delete(ptr,std::forward<PArgs>(pargs)...);
@@ -232,7 +208,7 @@ namespace yuki{
     template<typename T_out,typename T_in,typename... PArgs>
     inline void static_delete_a(T_in*& ptr,PArgs&&... pargs){
         static_cast<T_out*>(ptr)->T_out::~T_out();
-        if constexpr(has_operator_delete_a_v<T_out,void*,decltype(std::forward<PArgs>(pargs))...>)
+        if constexpr(Has_Operator_Delete_A<T_out,void*,decltype(std::forward<PArgs>(pargs))...>)
             T_out::operator delete[](ptr,std::forward<PArgs>(pargs)...);
         else
             ::operator delete[](ptr,std::forward<PArgs>(pargs)...);
