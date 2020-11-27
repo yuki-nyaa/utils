@@ -13,10 +13,13 @@ namespace yuki{ // Concepts
     concept Reference = std::is_reference_v<T>;
 }
 namespace yuki{ // Type traits and other compile-time facilities.
+    // For SFINAE uses :
     template<typename... Ts>
     struct true_type : std::true_type {};
     template<typename... Ts>
     struct false_type : std::false_type {};
+    template<typename... Ts>
+    struct void_t {typedef void type;};
 
     template<typename T,typename U,typename... Vs>
     struct is_same : std::conditional_t<yuki::is_same<T,Vs...>::value && yuki::is_same<T,U>::value, std::true_type, std::false_type> {};
