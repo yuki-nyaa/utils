@@ -39,3 +39,21 @@
     void static_destruct(T_in&& ref){
         static_cast<T_out&>(ref).T_out::~T_out();
     }
+
+
+
+    template<typename T,typename U>
+    struct unbalanced_pair : private std::pair<T,U>{
+        private:
+            typedef std::pair<T,U> Base_;
+        public:
+            using Base_::first;
+            using Base_::second;
+            using typename Base_::first_type;
+            using typename Base_::second_type;
+            using Base_::Base_;
+            operator T&() & noexcept {return first;}
+            operator const T&() const& noexcept {return first;}
+            operator T&&() && noexcept {return std::move(first);}
+            operator const T&&() const&& noexcept {return std::move(first);}
+    };

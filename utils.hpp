@@ -196,6 +196,8 @@ namespace yuki{
     template<typename T,typename... Args>
     concept Has_Operator_Delete_A = requires {T::operator delete[](std::declval<Args>()...);};
 
+
+    // TODO supports over-aligned types.
     template<typename T_out,typename T_in,typename... PArgs>
     inline void static_delete(T_in*& ptr,PArgs&&... pargs){
         static_cast<T_out*>(ptr)->T_out::~T_out(); // From [class.virtual] : Explicit qualiﬁcation with the scope operator (7.5.4.3) suppresses the virtual call mechanism.
@@ -282,6 +284,26 @@ namespace yuki{
 }
 
 namespace yuki{
+    //* Weirdly, `std::count(_if)` returns `difference_type` rather than `size_type`. So I come up with this.
+    template<typename InputIt,typename T>
+    constexpr auto count(InputIt first, InputIt last, const T& value) -> typename std::iterator_traits<InputIt>::size_type {
+        typename std::iterator_traits<InputIt>::difference_type n = 0;
+        for (; first != last; ++first){
+            if (*first == value)
+                ++n;
+        }
+        return n;
+    }
+    template<typename InputIt,typename UnaryPredicate>
+    constexpr auto count_if(InputIt first, InputIt last, UnaryPredicate p) -> typename std::iterator_traits<InputIt>::difference_type {
+        typename std::iterator_traits<InputIt>::difference_type n = 0;
+        for (; first != last; ++first){
+            if (p(*first))
+              ++n;
+        }
+        return n;
+    }
+
     // To be specialized for rough compare.
     template<typename T>
     struct rough_less{
@@ -290,5 +312,17 @@ namespace yuki{
     template<typename T>
     struct rough_greater{
         constexpr bool operator()(const T& lhs,const T& rhs) const {return lhs>rhs;}
+    };
+
+    template<typename T,typename Compare = std::less<T>>
+    struct equiv{
+        private:
+            Compare comp;
+        public:
+            constexpr equiv() noexcept = default;
+            explicit constexpr equiv(const Compare& comp_other) noexcept(std::is_nothrow_copy_constructible_v<Compare>) : comp(comp_other) {}
+            constexpr Compare get_compare() const noexcept {return comp;}
+            constexpr void set_compare(const Compare& comp_other) noexcept(std::is_nothrow_copy_assignable_v<Compare>) {comp=comp_other;}
+            constexpr bool operator()(const T& lhs,const T& rhs) const {return !comp(lhs,rhs) && !comp(rhs,lhs);}
     };
 }

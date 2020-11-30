@@ -5,3 +5,4 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 install(FILES utils.hpp DESTINATION include/yuki)
+install(FILES set.hpp DESTINATION include/yuki)
