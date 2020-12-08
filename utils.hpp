@@ -253,7 +253,15 @@ namespace yuki{
     }
 
     template<char sep = ' '>
-    void print_space(std::ostream& o){ o<<std::endl; }
+    void print_space_f(std::ostream& o){ o<<std::endl; }
+    template<char sep = ' ', typename T,typename... Ts>
+    void print_space_f(std::ostream& o, const T& message1, const Ts&... messages){
+        o<<message1<<sep;
+        print_space_f<sep>(o,messages...);
+    }
+
+    template<char sep = ' '>
+    void print_space(std::ostream& o){ o<<'\n'; }
     template<char sep = ' ', typename T,typename... Ts>
     void print_space(std::ostream& o, const T& message1, const Ts&... messages){
         o<<message1<<sep;
