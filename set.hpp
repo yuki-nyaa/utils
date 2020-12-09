@@ -240,10 +240,7 @@ namespace yuki{
             auto insert_equiv(const key_type& key) -> std::conditional_t<signal_suc,std::pair<iterator,bool>,iterator> {
                 auto ub = upper_bound(key);
                 if(ub==begin() || key_compare_(*(--ub),key)){
-                    if constexpr(signal_suc)
-                        return {insert(ub,key),true};
-                    else
-                        return insert(ub,key);
+                    YUKI_CONDITIONAL_RETURN(flag,YUKI_PROTECT({insert(ub,key),true}),YUKI_PROTECT(insert(ub,key)))
                 }else{
                     if constexpr(signal_suc)
                         return {--ub,false};

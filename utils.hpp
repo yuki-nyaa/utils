@@ -5,6 +5,19 @@
 #include<memory>
 #include<limits>
 #include<functional>
+
+#define YUKI_PROTECT(...) __VA_ARGS__
+
+// Well, although I hate macros, sometimes there seems to be no better way. Copy/move elision in a return statement only applies to prvalue, not xvalue, so fiddling with `std::forward` doesn't help. Also I have to say that `std::forward` and forwarding reference are really a headache.
+// If either `first` or `second` contains `<>` or `{}`, you should protect it with `YUKI_PROTECT()`, e.g. `YUKI_CONDITIONAL_RETURN(flag,YUKI_PROTECT({1,1,1}),"foo")`.
+#define YUKI_CONDITIONAL_RETURN(flag,first,second) \
+    do{ \
+        if constexpr(flag) \
+            return first; \
+        else \
+            return second; \
+    }while(0)
+
 namespace yuki{ // Concepts
     template<typename T>
     concept Enum = std::is_enum_v<T>;
@@ -195,7 +208,6 @@ namespace yuki{
     concept Has_Operator_Delete = requires {T::operator delete(std::declval<Args>()...);};
     template<typename T,typename... Args>
     concept Has_Operator_Delete_A = requires {T::operator delete[](std::declval<Args>()...);};
-
 
     // TODO supports over-aligned types.
     template<typename T_out,typename T_in,typename... PArgs>
