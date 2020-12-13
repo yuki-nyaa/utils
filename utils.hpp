@@ -6,10 +6,10 @@
 #include<limits>
 #include<functional>
 
+// Used to protect `<>` or `{}` list in macro arguments, e.g. `SOME_MACRO(YUKI_PROTECT({1,1,1}))`. This is because the preprocessor only matches `()`, so `SOME_MACRO({1,1,1})` is parsed to have 3 arguments, namely `{1`, `1` and `1}`.
 #define YUKI_PROTECT(...) __VA_ARGS__
 
-// Well, although I hate macros, sometimes there seems to be no better way. Copy/move elision in a return statement only applies to prvalue, not xvalue, so fiddling with `std::forward` doesn't help. Also I have to say that `std::forward` and forwarding reference are really a headache.
-// If either `first` or `second` contains `<>` or `{}`, you should protect it with `YUKI_PROTECT()`, e.g. `YUKI_CONDITIONAL_RETURN(flag,YUKI_PROTECT({1,1,1}),"foo")`.
+// Well, although I hate macros, sometimes there seems to be no better way. Copy/move elision in a return statement only applies to prvalue, not xvalue, so fiddling with `std::forward` doesn't help. Also NRVO does not apply to function parameters. Also I have to say that `std::forward` and forwarding references are really a headache for me.
 #define YUKI_CONDITIONAL_RETURN(flag,first,second) \
     do{ \
         if constexpr(flag) \
