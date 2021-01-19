@@ -11,7 +11,9 @@ namespace yuki{
     template<
         typename Key,
         typename Compare = std::less<Key>,
-        typename Equal = std::conditional_t<(requires(const Key& key1,const Key& key2){std::equal_to<Key>{}(key1,key2);}),std::equal_to<Key>,yuki::equiv<Key,Compare>>,
+        typename Equal = std::equal_to<Key>,
+        // Not implemented by compiler:
+        // typename Equal = std::conditional_t<(requires(const Key& key1,const Key& key2){std::equal_to<Key>{}(key1,key2);}),std::equal_to<Key>,yuki::equiv<Key,Compare>>,
         typename Allocator = std::allocator<Key>
     >
     struct multiset : private std::multiset<Key,Compare,Allocator> {
@@ -39,8 +41,8 @@ namespace yuki{
             Allocator alloc_;
             // Note: The following two flags only represents POTENTIAl equiv/equal occurrence, i.e. if the flag is false, then one can be sure that there are no equivs/equals, but if the flag is true, then both are possible. For this reason, the 2 flags can appear seemingly inconsistent, i.e. `p_has_equal_=true` while `p_has_equiv_=false`, in which case one can be sure that there are no equivs, but nothing could be said about equals.
             // For this reason, it only makes sense to set them from `false` to `true`.
-            bool p_has_equiv_ = false;
-            bool p_has_equal_ = false;
+            mutable bool p_has_equiv_ = false;
+            mutable bool p_has_equal_ = false;
             constexpr void flags_true_() noexcept {p_has_equal_=true;p_has_equiv_=true;}
             constexpr void flags_false_() noexcept {p_has_equiv_=false;p_has_equal_=false;}
         public:
@@ -548,8 +550,14 @@ namespace yuki{
                 }
             }
             template<typename InputIt>
-            void insert_equiv(InputIt first, InputIt last) {std::for_each(first,last,insert_equiv);}
-            void insert_equiv(std::initializer_list<key_type> il) {std::for_each(il.begin(),il.end(),insert_equiv);}
+            void insert_equiv(InputIt first, InputIt last){
+                for(;first!=last;++first)
+                    insert_equiv(*first);
+            }
+            void insert_equiv(std::initializer_list<key_type> il){
+                for(const key_type& key : il)
+                    insert_equiv(key);
+            }
             template<bool signal_suc>
             auto insert_equiv(node_type&& nh) -> std::conditional_t<signal_suc,std::pair<iterator,bool>,iterator> {
                 if(nh.empty()){
@@ -621,8 +629,14 @@ namespace yuki{
                 }
             }
             template<typename InputIt>
-            void insert_equal(InputIt first, InputIt last) {std::for_each(first,last,insert_equal);}
-            void insert_equal(std::initializer_list<key_type> il) {std::for_each(il.begin(),il.end(),insert_equal);}
+            void insert_equal(InputIt first, InputIt last){
+                for(;first!=last;++first)
+                    insert_equal(*first);
+            }
+            void insert_equal(std::initializer_list<key_type> il){
+                for(const key_type& key : il)
+                    insert_equal(key);
+            }
             template<bool signal_suc>
             auto insert_equal(node_type&& nh) -> std::conditional_t<signal_suc,std::pair<iterator,bool>,iterator> {
                 if(nh.empty()){

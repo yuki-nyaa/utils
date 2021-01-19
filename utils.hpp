@@ -163,6 +163,7 @@ namespace yuki{ // Type traits and other compile-time facilities.
             case 4 : return uint_enum::USHORT;
             case 5 : return uint_enum::UCHAR;
         }
+        return uint_enum::ULLONG; // Fallback.
     }
 
     template<unsigned long long a,uint_enum flag = uint_auto_f(a)>
@@ -195,6 +196,7 @@ namespace yuki{ // Type traits and other compile-time facilities.
             case 4 : return int_enum::SHORT;
             case 5 : return int_enum::CHAR;
         }
+        return int_enum::LLONG; // Fallback.
     }
 
     template<long long a,int_enum flag = int_auto_f(a)>
