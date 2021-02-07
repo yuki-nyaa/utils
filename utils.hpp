@@ -314,6 +314,11 @@ namespace yuki{
         rhs=std::string(source.substr(pos+1,source.size()));
         return true;
     }
+
+    template<typename CharT,typename Traits = std::char_traits<CharT>,typename Alloc= std::allocator<CharT>>
+    inline const std::basic_string<CharT,Traits,Alloc> empty_basic_string = {};
+
+    inline const std::string empty_string = {};
 }
 
 namespace yuki{
