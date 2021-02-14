@@ -18,6 +18,16 @@
             return second; \
     }while(0)
 
+#ifdef YUKI_DBGOUT_ON
+#define YUKI_DBGOUT_STREAM std::cerr
+#define YUKI_DBGOUT(...) \
+    do{ \
+
+    }while(0)
+#define YUKI_CONSTEXPR_DBGOUT
+#endif
+#define YUKI_CONSTEXPR_DBGOUT constexpr
+
 namespace yuki{ // Concepts
     template<typename T>
     concept Enum = std::is_enum_v<T>;
@@ -250,12 +260,8 @@ constexpr std::ostream& operator<<(std::ostream& stream, const T& e){
 }
 
 namespace yuki{
-    constexpr void ignore(){}
-    template<typename T,typename... Ts>
-    constexpr void ignore(const T& first,const Ts&... args){
-        (void)first;
-        ignore(args...);
-    }
+    template<typename... Ts>
+    constexpr void ignore(const Ts&... args) {(...,void(args));}
 
     // You may find this rather pointless. The story is that sometimes I want to inhibit IMPLICIT derived-to-base conversion while permitting EXPLICIT cast. So I decide to inherit privately (or protectedly) and befriend (some instances of) this function to achieve the effect. Since `static_cast` is a KEYWORD and not a normal identifier such as `std::static_cast`, the spelling is changed.
     template<typename T,typename S>
@@ -269,7 +275,7 @@ namespace yuki{
 
 namespace yuki{
     template<bool if_flush=true,typename T>
-    void print_line(const T& message,std::ostream& o = std::cout){
+    void print_line(const T& message,std::ostream& o=std::cout){
         if constexpr(if_flush){
             o<<message<<std::endl;
         }else{
@@ -277,21 +283,10 @@ namespace yuki{
         }
     }
 
-    template<char sep = ' '>
-    void print_space_f(std::ostream& o){ o<<std::endl; }
-    template<char sep = ' ', typename T,typename... Ts>
-    void print_space_f(std::ostream& o, const T& message1, const Ts&... messages){
-        o<<message1<<sep;
-        print_space_f<sep>(o,messages...);
-    }
-
-    template<char sep = ' '>
-    void print_space(std::ostream& o){ o<<'\n'; }
-    template<char sep = ' ', typename T,typename... Ts>
-    void print_space(std::ostream& o, const T& message1, const Ts&... messages){
-        o<<message1<<sep;
-        print_space<sep>(o,messages...);
-    }
+    template<char sep = ' ',typename... Ts>
+    void print_space(std::ostream& o,const Ts&... messages) {(...,(o<<messages<<sep))<<std::endl;}
+    template<char sep = ' ',typename... Ts>
+    void print_space_nf(std::ostream& o,const Ts&... messages) {(...,(o<<messages<<sep))<<'\n';}
 
     namespace err{
         inline constexpr const char* ERR="ERROR: ";
@@ -302,7 +297,7 @@ namespace yuki{
         inline constexpr const char* INOTE="--Note: ";
         inline constexpr const char* ICONTEXT="--Context: ";
         template<bool if_flush=true,typename T>
-        void error_line(const T& message){ print_line(message,std::cerr); }
+        void error_line(const T& message,std::ostream& o=std::cerr) {print_line<if_flush,T>(message,o);}
     }
 
     [[nodiscard("Are you really sure that the split is possible?")]]
