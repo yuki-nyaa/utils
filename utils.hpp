@@ -5,6 +5,8 @@
 #include<memory>
 #include<limits>
 #include<functional>
+#include<ctime>
+#include<iomanip>
 
 // Used to protect `<>` or `{}` list in macro arguments, e.g. `SOME_MACRO(YUKI_PROTECT({1,1,1}))`. This is because the preprocessor only matches `()`, so `SOME_MACRO({1,1,1})` is parsed to have 3 arguments, namely `{1`, `1` and `1}`.
 #define YUKI_PROTECT(...) __VA_ARGS__
@@ -17,16 +19,6 @@
         else \
             return second; \
     }while(0)
-
-#ifdef YUKI_DBGOUT_ON
-#define YUKI_DBGOUT_STREAM std::cerr
-#define YUKI_DBGOUT(...) \
-    do{ \
-
-    }while(0)
-#define YUKI_CONSTEXPR_DBGOUT
-#endif
-#define YUKI_CONSTEXPR_DBGOUT constexpr
 
 namespace yuki{ // Concepts
     template<typename T>
@@ -310,10 +302,15 @@ namespace yuki{
         return true;
     }
 
-    template<typename CharT,typename Traits = std::char_traits<CharT>,typename Alloc= std::allocator<CharT>>
-    inline const std::basic_string<CharT,Traits,Alloc> empty_basic_string = {};
+    inline std::time_t internal_time_;
 
-    inline const std::string empty_string = {};
+    template<typename... Ts>
+    void dbgout_base(std::ostream& o, const char* program_name, const Ts&... messages){
+        o<<"YDBG - "<<program_name<<" - ";
+        std::time(&internal_time_);
+        o<<std::put_time(std::localtime(&internal_time_),"%Y-%m-%d %H:%M:%S")<<" - ";
+        (...,(o<<messages<<' '))<<std::endl;
+    }
 }
 
 namespace yuki{
