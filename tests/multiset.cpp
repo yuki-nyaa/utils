@@ -18,8 +18,8 @@ std::ostream& operator<<(std::ostream& o,const Foo& foo){
 }
 
 template<>
-struct yuki::rough_less<Foo>{
-    constexpr bool operator()(const Foo& lhs,const Foo& rhs) const noexcept {
+struct yuki::rough_less<::Foo>{
+    constexpr bool operator()(const ::Foo& lhs,const ::Foo& rhs) const noexcept {
         if(lhs.a<rhs.a)
             return true;
         else if(rhs.a<lhs.a)
