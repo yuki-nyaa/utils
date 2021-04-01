@@ -1,12 +1,12 @@
 #pragma once
-#include<iostream>
 #include<string>
 #include<type_traits>
 #include<memory>
 #include<limits>
 #include<functional>
 #include<ctime>
-#include<iomanip>
+#include<fmt/core.h>
+#include<fmt/chrono.h>
 
 // Used to protect `<>` or `{}` list in macro arguments, e.g. `SOME_MACRO(YUKI_PROTECT({1,1,1}))`. This is because the preprocessor only matches `()`, so `SOME_MACRO({1,1,1})` is parsed to have 3 arguments, namely `{1`, `1` and `1}`.
 #define YUKI_PROTECT(...) __VA_ARGS__
@@ -20,13 +20,6 @@
             return second; \
     }while(0)
 
-namespace yuki{ // Concepts
-    template<typename T>
-    concept Enum = std::is_enum_v<T>;
-
-    template<typename T>
-    concept Reference = std::is_reference_v<T>;
-}
 namespace yuki{ // Type traits and other compile-time facilities.
     template<typename T,typename U,typename... Vs>
     struct is_same : std::conditional_t<yuki::is_same<T,Vs...>::value && yuki::is_same<T,U>::value, std::true_type, std::false_type> {};
@@ -245,12 +238,6 @@ namespace yuki{
     }
 }
 
-// From James Adkison in https://stackoverflow.com/questions/11421432/how-can-i-output-the-value-of-an-enum-class-in-c11
-template<yuki::Enum T>
-constexpr std::ostream& operator<<(std::ostream& stream, const T& e){
-    return stream << static_cast<typename std::underlying_type<T>::type>(e);
-}
-
 namespace yuki{
     template<typename... Ts>
     constexpr void ignore(const Ts&... args) {(...,void(args));}
@@ -266,19 +253,19 @@ namespace yuki{
 }
 
 namespace yuki{
-    template<bool if_flush=true,typename T>
-    void print_line(const T& message,std::ostream& o=std::cout){
-        if constexpr(if_flush){
-            o<<message<<std::endl;
-        }else{
-            o<<message<<"\n";
-        }
-    }
+    template<typename T,typename CharT>
+    struct simple_formatter{ // Used only with empty format string.
+        constexpr auto parse(fmt::basic_format_parse_context<CharT>& ctx) -> typename fmt::basic_format_parse_context<CharT>::iterator {return ctx.begin();}
+    };
+
+    template<typename T>
+    void print_line(const T& message,FILE* fp=stdout) {fmt::print(fp,"{}\n",message);}
+
+    template<typename T>
+    void error_line(const T& message,FILE* fp=stderr) {fmt::print(fp,"{}\n",message);}
 
     template<char sep = ' ',typename... Ts>
-    void print_space(std::ostream& o,const Ts&... messages) {(...,(o<<messages<<sep))<<std::endl;}
-    template<char sep = ' ',typename... Ts>
-    void print_space_nf(std::ostream& o,const Ts&... messages) {(...,(o<<messages<<sep))<<'\n';}
+    void print_space(FILE* fp,const Ts&... messages) {(...,(fmt::print(fp,"{}{}",messages,sep))); fprintf(fp,"\n");}
 
     namespace err{
         inline constexpr const char* ERR="ERROR: ";
@@ -288,8 +275,6 @@ namespace yuki{
         inline constexpr const char* CONTEXT="Context: ";
         inline constexpr const char* INOTE="--Note: ";
         inline constexpr const char* ICONTEXT="--Context: ";
-        template<bool if_flush=true,typename T>
-        void error_line(const T& message,std::ostream& o=std::cerr) {print_line<if_flush,T>(message,o);}
     }
 
     [[nodiscard("Are you really sure that the split is possible?")]]
@@ -302,14 +287,21 @@ namespace yuki{
         return true;
     }
 
+    inline std::pair<std::string,std::string> split(std::string_view source,const char sign){
+        std::string_view::size_type pos=source.find(sign);
+        if(pos==std::string_view::npos)
+            throw std::runtime_error("Split-sign not found!");
+        return {std::string(source.substr(0,pos)),std::string(source.substr(pos+1,source.size()))};
+    }
+
     inline std::time_t internal_time_;
 
     template<typename... Ts>
-    void dbgout_base(std::ostream& o, const char* program_name, const Ts&... messages){
-        o<<"YDBG - "<<program_name<<" - ";
+    void dbgout_base(FILE* fp, const char* program_name, std::string_view fmt, const Ts&... messages){
         std::time(&internal_time_);
-        o<<std::put_time(std::localtime(&internal_time_),"%Y-%m-%d %H:%M:%S")<<" - ";
-        (...,(o<<messages<<' '))<<std::endl;
+        fmt::print(fp,"YDBG - {} - {:%Y-%m-%d %H:%M:%S} - ",program_name,fmt::localtime(internal_time_));
+        fmt::print(fp,fmt,messages...);
+        fflush(fp);
     }
 }
 
