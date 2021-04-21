@@ -267,6 +267,27 @@ namespace yuki{
     template<char sep = ' ',typename... Ts>
     void print_space(FILE* fp,const Ts&... messages) {(...,(fmt::print(fp,"{}{}",messages,sep))); fprintf(fp,"\n");}
 
+    template<typename... Args>
+    void try_print(FILE* fp,std::string_view fmt,const Args&... args){
+        if(fp)
+            fmt::print(fp,fmt,args...);
+    }
+
+    inline int try_fprintf(FILE* fp,const char* format){
+        if(fp)
+            return fprintf(fp,format);
+        else
+            return 0;
+    }
+
+    // The standard does not say what would happen with `fclose(NULL/nullptr)`. It even does not say it's undefined.
+    inline int try_fclose(FILE* fp){
+        if(fp)
+            return fclose(fp);
+        else
+            return 0;
+    }
+
     namespace err{
         inline constexpr const char* ERR="ERROR: ";
         inline constexpr const char* WARN="WARNING: ";
