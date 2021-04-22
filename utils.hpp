@@ -261,9 +261,6 @@ namespace yuki{
     template<typename T>
     void print_line(const T& message,FILE* fp=stdout) {fmt::print(fp,"{}\n",message);}
 
-    template<typename T>
-    void error_line(const T& message,FILE* fp=stderr) {fmt::print(fp,"{}\n",message);}
-
     template<char sep = ' ',typename... Ts>
     void print_space(FILE* fp,const Ts&... messages) {(...,(fmt::print(fp,"{}{}",messages,sep))); fprintf(fp,"\n");}
 
@@ -288,14 +285,27 @@ namespace yuki{
             return 0;
     }
 
-    namespace err{
-        inline constexpr const char* ERR="ERROR: ";
-        inline constexpr const char* WARN="WARNING: ";
-        inline constexpr const char* INDENT="    ";
-        inline constexpr const char* NOTE="Note: ";
-        inline constexpr const char* CONTEXT="Context: ";
-        inline constexpr const char* INOTE="--Note: ";
-        inline constexpr const char* ICONTEXT="--Context: ";
+    inline void print_loc(FILE* fp,std::string_view filename,size_t line,size_t col){
+        fmt::print(fp,"{}:{}:{}: ",filename,line,col);
+    }
+
+    template<typename... Args>
+    void print_error(FILE* fp,std::string_view fmt,const Args&... args){
+        fprintf(fp,"ERROR: ");
+        fmt::print(fp,fmt,args...);
+        fflush(fp);
+    }
+    template<typename... Args>
+    void print_warning(FILE* fp,std::string_view fmt,const Args&... args){
+        fprintf(fp,"WARNING: ");
+        fmt::print(fp,fmt,args...);
+        fflush(fp);
+    }
+    template<typename... Args>
+    void print_note(FILE* fp,std::string_view fmt,const Args&... args){
+        fprintf(fp,"--NOTE: ");
+        fmt::print(fp,fmt,args...);
+        fflush(fp);
     }
 
     //[[nodiscard("If you discard the return value, you won't know if the split is possible or not.")]]
