@@ -298,21 +298,76 @@ namespace yuki{
         inline constexpr const char* ICONTEXT="--Context: ";
     }
 
-    [[nodiscard("Are you really sure that the split is possible?")]]
-    inline bool split(std::string_view source, std::string& lhs, std::string& rhs, const char sign){
-        std::string_view::size_type pos=source.find(sign);
-        if(pos==std::string_view::npos)
-            return false;
-        lhs=std::string(source.substr(0,pos));
-        rhs=std::string(source.substr(pos+1,source.size()));
-        return true;
+    //[[nodiscard("If you discard the return value, you won't know if the split is possible or not.")]]
+    //inline bool split_first(std::string_view source, const char sign, std::string& lhs, std::string& rhs){
+    //    std::string_view::size_type pos=source.find(sign);
+    //    if(pos==std::string_view::npos)
+    //        return false;
+    //    lhs=std::string(source.substr(0,pos));
+    //    rhs=std::string(source.substr(pos+1,source.size()));
+    //    return true;
+    //}
+
+    //[[nodiscard("If you discard the return value, you won't know if the split is possible or not.")]]
+    //inline bool split_last(std::string_view source, const char sign, std::string& lhs, std::string& rhs){
+    //    std::string_view::size_type pos=source.rfind(sign);
+    //    if(pos==std::string_view::npos)
+    //        return false;
+    //    lhs=std::string(source.substr(0,pos));
+    //    rhs=std::string(source.substr(pos+1,source.size()));
+    //    return true;
+    //}
+
+    template<typename CharT,typename Traits,typename Allocator=std::allocator<CharT>>
+    std::pair<std::basic_string<CharT,Traits,Allocator>,std::basic_string<CharT,Traits,Allocator>> split_first(std::basic_string_view<CharT,Traits> source,const CharT sign,const Allocator& alloc=Allocator{}){
+        typename std::basic_string_view<CharT,Traits>::size_type pos=source.find(sign);
+        if(pos==std::basic_string_view<CharT,Traits>::npos)
+            throw std::runtime_error("Split-sign not found!");
+        return {std::basic_string<CharT,Traits,Allocator>(source.substr(0,pos),alloc),std::basic_string<CharT,Traits,Allocator>(source.substr(pos+1,source.size()),alloc)};
+    }
+    template<typename CharT,typename Traits=std::char_traits<CharT>,typename Allocator=std::allocator<CharT>,typename View> requires std::is_convertible_v<const View&, std::basic_string_view<CharT, Traits>>
+    std::pair<std::basic_string<CharT,Traits,Allocator>,std::basic_string<CharT,Traits,Allocator>> split_first(const View& source,const CharT sign,const Allocator& alloc=Allocator{}){
+        std::basic_string_view<CharT,Traits> sv=source;
+        return split_first<CharT,Traits,Allocator>(sv,sign,alloc);
     }
 
-    inline std::pair<std::string,std::string> split(std::string_view source,const char sign){
-        std::string_view::size_type pos=source.find(sign);
-        if(pos==std::string_view::npos)
+    template<typename CharT,typename Traits,typename Allocator=std::allocator<CharT>>
+    std::pair<std::basic_string<CharT,Traits,Allocator>,std::basic_string<CharT,Traits,Allocator>> split_last(std::basic_string_view<CharT,Traits> source,const CharT sign,const Allocator& alloc=Allocator{}){
+        typename std::basic_string_view<CharT,Traits>::size_type pos=source.rfind(sign);
+        if(pos==std::basic_string_view<CharT,Traits>::npos)
             throw std::runtime_error("Split-sign not found!");
-        return {std::string(source.substr(0,pos)),std::string(source.substr(pos+1,source.size()))};
+        return {std::basic_string<CharT,Traits,Allocator>(source.substr(0,pos),alloc),std::basic_string<CharT,Traits,Allocator>(source.substr(pos+1,source.size()),alloc)};
+    }
+    template<typename CharT,typename Traits=std::char_traits<CharT>,typename Allocator=std::allocator<CharT>,typename View> requires std::is_convertible_v<const View&, std::basic_string_view<CharT, Traits>>
+    std::pair<std::basic_string<CharT,Traits,Allocator>,std::basic_string<CharT,Traits,Allocator>> split_last(const View& source,const CharT sign,const Allocator& alloc=Allocator{}){
+        std::basic_string_view<CharT,Traits> sv=source;
+        return split_last<CharT,Traits,Allocator>(sv,sign,alloc);
+    }
+
+    template<typename CharT,typename Traits>
+    std::pair<std::basic_string_view<CharT,Traits>,std::basic_string_view<CharT,Traits>> vsplit_first(std::basic_string_view<CharT,Traits> source,const CharT sign){
+        typename std::basic_string_view<CharT,Traits>::size_type pos=source.find(sign);
+        if(pos==std::basic_string_view<CharT,Traits>::npos)
+            throw std::runtime_error("Split-sign not found!");
+        return {source.substr(0,pos),source.substr(pos+1,source.size())};
+    }
+    template<typename CharT,typename Traits=std::char_traits<CharT>,typename View> requires std::is_convertible_v<const View&, std::basic_string_view<CharT, Traits>>
+    std::pair<std::basic_string_view<CharT,Traits>,std::basic_string_view<CharT,Traits>> vsplit_first(const View& source,const CharT sign){
+        std::basic_string_view<CharT,Traits> sv=source;
+        return vsplit_first<CharT,Traits>(sv,sign);
+    }
+
+    template<typename CharT,typename Traits>
+    std::pair<std::basic_string_view<CharT,Traits>,std::basic_string_view<CharT,Traits>> vsplit_last(std::basic_string_view<CharT,Traits> source,const CharT sign){
+        typename std::basic_string_view<CharT,Traits>::size_type pos=source.rfind(sign);
+        if(pos==std::basic_string_view<CharT,Traits>::npos)
+            throw std::runtime_error("Split-sign not found!");
+        return {source.substr(0,pos),source.substr(pos+1,source.size())};
+    }
+    template<typename CharT,typename Traits=std::char_traits<CharT>,typename View> requires std::is_convertible_v<const View&, std::basic_string_view<CharT, Traits>>
+    std::pair<std::basic_string_view<CharT,Traits>,std::basic_string_view<CharT,Traits>> vsplit_last(const View& source,const CharT sign){
+        std::basic_string_view<CharT,Traits> sv=source;
+        return vsplit_last<CharT,Traits>(sv,sign);
     }
 
     inline std::time_t internal_time_;
