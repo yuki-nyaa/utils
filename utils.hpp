@@ -129,7 +129,8 @@ namespace yuki{ // Type traits and other compile-time facilities.
     using type_switch_t = typename type_switch<index,Ts...>::type;
 
 
-    inline constexpr size_t type_to_num_nomatch = (size_t)-1;
+    inline constexpr size_t type_to_num_nomatch = -1;
+
     template<size_t counter,typename T,typename... Us>
     struct type_to_num_helper_ : std::integral_constant<size_t,type_to_num_nomatch> {};
     template<size_t counter,typename T,typename U0, typename... Un>
@@ -140,6 +141,30 @@ namespace yuki{ // Type traits and other compile-time facilities.
     struct type_to_num : type_to_num_helper_<0,T,Us...> {};
     template<typename T,typename... Us>
     inline constexpr size_t type_to_num_v = type_to_num<T,Us...>::value;
+
+
+    // Similar to `type_switch`.
+    template<typename T>
+    inline constexpr T i_th_nomatch=std::numeric_limits<T>::max();
+
+    template<size_t head,size_t index,typename T,T... ints>
+    struct i_th_helper_;
+    template<size_t head,size_t index,typename T,T int0,T... ints>
+    struct i_th_helper_<head,index,T,int0,ints...> : std::conditional_t<index==head,std::integral_constant<T,int0>,i_th_helper_<head+1,index,T,ints...>> {};
+    template<size_t head,size_t index,typename T>
+    struct i_th_helper_<head,index,T> {static constexpr T value=i_th_nomatch<T>;};
+
+    template<size_t index,typename T,T... ints>
+    struct i_th : i_th_helper_<0,index,T,ints...> {};
+    template<size_t index,typename T,T... ints>
+    inline constexpr T i_th_v = i_th<index,T,ints...>::value;
+
+    // Specialization for `std::integer_sequence`.
+    template<size_t index,typename T,T... ints>
+    struct i_th<index,std::integer_sequence<T,ints...>> : i_th<index,T,ints...> {};
+    template<size_t index,typename T,T... ints>
+    inline constexpr T i_th_v<index,std::integer_sequence<T,ints...>> = i_th<index,T,ints...>::value;
+
 
     // Automatically chooses the smallest type to hold a given value.
     // Note that the built-in `auto` and `decltype` deduction facilities only deduce types bigger than `(unsigned) int`.
