@@ -21,6 +21,18 @@
     }while(0)
 
 namespace yuki{ // Type traits and other compile-time facilities.
+    template<typename T,typename...>
+    using always_type = T;
+    template<typename...>
+    using always_std_true_type = std::true_type;
+    template<typename...>
+    using always_std_false_type = std::false_type;
+
+    template<typename...>
+    inline constexpr bool always_true_v = true;
+    template<typename...>
+    inline constexpr bool always_false_v = false;
+
     template<typename T,typename U,typename... Vs>
     struct is_same : std::conditional_t<yuki::is_same<T,Vs...>::value && yuki::is_same<T,U>::value, std::true_type, std::false_type> {};
 
@@ -48,10 +60,10 @@ namespace yuki{ // Type traits and other compile-time facilities.
     inline constexpr bool is_unique_v = is_unique<T,Us...>::value;
 
     template<typename T>
-    struct static_assert_dummy : std::negation<std::is_same<T,T>> {};
+    struct static_assert_dummy : always_std_false_type<T> {};
 
     template<typename T>
-    inline constexpr bool static_assert_dummy_v = static_assert_dummy<T>::value;
+    inline constexpr bool static_assert_dummy_v = always_false_v<T>;
 
 
     struct type_switch_nomatch{};
@@ -67,20 +79,6 @@ namespace yuki{ // Type traits and other compile-time facilities.
     struct type_switch : type_switch_helper_<0,index,Ts...> {}; // Same with C++ array, the index starts at 0.
     template<size_t index,typename... Ts>
     using type_switch_t = typename type_switch<index,Ts...>::type;
-
-
-    inline constexpr size_t type_to_num_nomatch = -1;
-
-    template<size_t counter,typename T,typename... Us>
-    struct type_to_num_helper_ : std::integral_constant<size_t,type_to_num_nomatch> {};
-    template<size_t counter,typename T,typename U0, typename... Un>
-    struct type_to_num_helper_<counter,T,U0,Un...> : std::conditional_t<std::is_same_v<T,U0>,std::integral_constant<size_t,counter>,type_to_num_helper_<counter+1,T,Un...>> {};
-
-    //* Gets the index of T (first occurrence) among the type-list Us. Same with C++ array, the index starts at 0. Returns `type_to_num_nomatch` when there is no match.
-    template<typename T,typename... Us>
-    struct type_to_num : type_to_num_helper_<0,T,Us...> {};
-    template<typename T,typename... Us>
-    inline constexpr size_t type_to_num_v = type_to_num<T,Us...>::value;
 
 
     // Similar to `type_switch`.
@@ -104,6 +102,22 @@ namespace yuki{ // Type traits and other compile-time facilities.
     struct i_th<index,std::integer_sequence<T,ints...>> : i_th<index,T,ints...> {};
     template<size_t index,typename T,T... ints>
     inline constexpr T i_th_v<index,std::integer_sequence<T,ints...>> = i_th<index,T,ints...>::value;
+
+
+
+    inline constexpr size_t type_to_num_nomatch = -1;
+
+    template<size_t counter,typename T,typename... Us>
+    struct type_to_num_helper_ : std::integral_constant<size_t,type_to_num_nomatch> {};
+    template<size_t counter,typename T,typename U0, typename... Un>
+    struct type_to_num_helper_<counter,T,U0,Un...> : std::conditional_t<std::is_same_v<T,U0>,std::integral_constant<size_t,counter>,type_to_num_helper_<counter+1,T,Un...>> {};
+
+    //* Gets the index of T (first occurrence) among the type-list Us. Same with C++ array, the index starts at 0. Returns `type_to_num_nomatch` when there is no match.
+    template<typename T,typename... Us>
+    struct type_to_num : type_to_num_helper_<0,T,Us...> {};
+    template<typename T,typename... Us>
+    inline constexpr size_t type_to_num_v = type_to_num<T,Us...>::value;
+
 
 
     // Automatically chooses the smallest type to hold a given value.
@@ -174,6 +188,25 @@ namespace yuki{ // Type traits and other compile-time facilities.
 
     template<long long a>
     using int_auto_t = typename int_auto<a>::type;
+
+
+
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+    struct is_braced_init_list_convertible_helper{
+        template <typename T>
+        static int t_dummy(const T&); // Note: plain `T` is wrong because it will decay.
+
+        template <typename T,typename... Args>
+        static std::true_type test(int,decltype(t_dummy<T>({std::declval<Args>()...}))=0);
+        template <typename T,typename... Args>
+        static std::false_type test(long);
+    };
+    template<typename T,typename... Args>
+    struct is_braced_init_list_convertible : decltype(is_braced_init_list_convertible_helper::template test<T,Args...>(0)) {};
+    template<typename T,typename... Args>
+    inline constexpr bool is_braced_init_list_convertible_v = is_braced_init_list_convertible<T,Args...>::value;
+    #pragma GCC diagnostic pop
 }
 
 namespace yuki{
