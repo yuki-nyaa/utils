@@ -326,6 +326,21 @@ namespace yuki{
         return vsplit_last<CharT,Traits>(sv,sign);
     }
 
+    std::pair<std::string,std::string> split_filename(std::string_view filename){
+        std::string_view::size_type pos=filename.rfind('.');
+        if(pos==std::string_view::npos)
+            return {{filename.data(),filename.size()},{}};
+        return {std::string(filename.substr(0,pos)),std::string(filename.substr(pos+1,filename.size()))};
+    }
+
+    std::pair<std::string_view,std::string_view> vsplit_filename(std::string_view filename){
+        std::string_view::size_type pos=filename.rfind('.');
+        if(pos==std::string_view::npos)
+            return {filename,{}};
+        return {filename.substr(0,pos),filename.substr(pos+1,filename.size())};
+    }
+
+
     inline std::time_t internal_time_;
 
     template<typename... Ts>
