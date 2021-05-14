@@ -57,3 +57,84 @@
             operator T&&() && noexcept {return std::move(first);}
             operator const T&&() const&& noexcept {return std::move(first);}
     };
+
+    //* Adds low-level `const` to reference types. Simply adds `const` for non-reference types, including pointer types.
+    template<typename T>
+    struct add_lconst_ref {typedef T const type;};
+    template<typename T>
+    struct add_lconst_ref<T&> {typedef const T& type;};
+    template<typename T>
+    struct add_lconst_ref<T&&> {typedef const T&& type;};
+    template<typename T>
+    using add_lconst_ref_t = typename add_lconst_ref<T>::type;
+
+    //* Adds low-level `const` to pointer types. Simply adds `const` for non-pointer types, including reference types.
+    template<typename T>
+    struct add_lconst_ptr {typedef T const type;};
+    template<typename T>
+    struct add_lconst_ptr<T*> {typedef const T* type;};
+    template<typename T>
+    using add_lconst_ptr_t = typename add_lconst_ptr<T>::type;
+
+    //* Adds low-level `const` to reference AND pointer types. Simply adds `const` for other types.
+    template<typename T>
+    struct add_lconst {typedef T const type;};
+    template<typename T>
+    struct add_lconst<T&> {typedef const T& type;};
+    template<typename T>
+    struct add_lconst<T&&> {typedef const T&& type;};
+    template<typename T>
+    struct add_lconst<T*> {typedef const T* type;};
+    template<typename T>
+    using add_lconst_t =  typename add_lconst<T>::type;
+
+    //* Removes low-level `const` from reference types. Simply removes `const` for non-reference types, including pointer types.
+    template<typename T>
+    struct remove_lconst_ref : std::remove_const<T> {};
+    template<typename T>
+    struct remove_lconst_ref<const T&> {typedef T& type;};
+    template<typename T>
+    struct remove_lconst_ref<const T&&> {typedef T&& type;};
+    template<typename T>
+    using remove_lconst_ref_t = typename remove_lconst_ref<T>::type;
+
+    //* Removes low-level `const` from pointer types. Simply removes `const` for non-pointer types, including reference types.
+    template<typename T>
+    struct remove_lconst_ptr : std::remove_const<T> {};
+    template<typename T>
+    struct remove_lconst_ptr<const T*> {typedef T* type;};
+    template<typename T>
+    using remove_lconst_ptr_t = typename remove_lconst_ptr<T>::type;
+
+    //* Removes low-level `const` from reference AND pointer types. Simply removes `const` for other types.
+    template<typename T>
+    struct remove_lconst : std::remove_const<T> {};
+    template<typename T>
+    struct remove_lconst<const T&> {typedef T& type;};
+    template<typename T>
+    struct remove_lconst<const T&&> {typedef T&& type;};
+    template<typename T>
+    struct remove_lconst<const T*> {typedef T* type;};
+    template<typename T>
+    using remove_lconst_t =  typename remove_lconst<T>::type;
+
+
+    [[nodiscard("If you discard the return value, you won't know if the split is possible or not.")]]
+    inline bool split_first(std::string_view source, const char sign, std::string& lhs, std::string& rhs){
+        std::string_view::size_type pos=source.find(sign);
+        if(pos==std::string_view::npos)
+            return false;
+        lhs=std::string(source.substr(0,pos));
+        rhs=std::string(source.substr(pos+1,source.size()));
+        return true;
+    }
+
+    [[nodiscard("If you discard the return value, you won't know if the split is possible or not.")]]
+    inline bool split_last(std::string_view source, const char sign, std::string& lhs, std::string& rhs){
+        std::string_view::size_type pos=source.rfind(sign);
+        if(pos==std::string_view::npos)
+            return false;
+        lhs=std::string(source.substr(0,pos));
+        rhs=std::string(source.substr(pos+1,source.size()));
+        return true;
+    }

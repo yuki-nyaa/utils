@@ -53,66 +53,6 @@ namespace yuki{ // Type traits and other compile-time facilities.
     template<typename T>
     inline constexpr bool static_assert_dummy_v = static_assert_dummy<T>::value;
 
-    //* Adds low-level `const` to reference types. Simply adds `const` for non-reference types, including pointer types.
-    template<typename T>
-    struct add_lconst_ref {typedef T const type;};
-    template<typename T>
-    struct add_lconst_ref<T&> {typedef const T& type;};
-    template<typename T>
-    struct add_lconst_ref<T&&> {typedef const T&& type;};
-    template<typename T>
-    using add_lconst_ref_t = typename add_lconst_ref<T>::type;
-
-    //* Adds low-level `const` to pointer types. Simply adds `const` for non-pointer types, including reference types.
-    template<typename T>
-    struct add_lconst_ptr {typedef T const type;};
-    template<typename T>
-    struct add_lconst_ptr<T*> {typedef const T* type;};
-    template<typename T>
-    using add_lconst_ptr_t = typename add_lconst_ptr<T>::type;
-
-    //* Adds low-level `const` to reference AND pointer types. Simply adds `const` for other types.
-    template<typename T>
-    struct add_lconst {typedef T const type;};
-    template<typename T>
-    struct add_lconst<T&> {typedef const T& type;};
-    template<typename T>
-    struct add_lconst<T&&> {typedef const T&& type;};
-    template<typename T>
-    struct add_lconst<T*> {typedef const T* type;};
-    template<typename T>
-    using add_lconst_t =  typename add_lconst<T>::type;
-
-    //* Removes low-level `const` from reference types. Simply removes `const` for non-reference types, including pointer types.
-    template<typename T>
-    struct remove_lconst_ref : std::remove_const<T> {};
-    template<typename T>
-    struct remove_lconst_ref<const T&> {typedef T& type;};
-    template<typename T>
-    struct remove_lconst_ref<const T&&> {typedef T&& type;};
-    template<typename T>
-    using remove_lconst_ref_t = typename remove_lconst_ref<T>::type;
-
-    //* Removes low-level `const` from pointer types. Simply removes `const` for non-pointer types, including reference types.
-    template<typename T>
-    struct remove_lconst_ptr : std::remove_const<T> {};
-    template<typename T>
-    struct remove_lconst_ptr<const T*> {typedef T* type;};
-    template<typename T>
-    using remove_lconst_ptr_t = typename remove_lconst_ptr<T>::type;
-
-    //* Removes low-level `const` from reference AND pointer types. Simply removes `const` for other types.
-    template<typename T>
-    struct remove_lconst : std::remove_const<T> {};
-    template<typename T>
-    struct remove_lconst<const T&> {typedef T& type;};
-    template<typename T>
-    struct remove_lconst<const T&&> {typedef T&& type;};
-    template<typename T>
-    struct remove_lconst<const T*> {typedef T* type;};
-    template<typename T>
-    using remove_lconst_t =  typename remove_lconst<T>::type;
-
 
     struct type_switch_nomatch{};
 
@@ -269,11 +209,11 @@ namespace yuki{
 
     // You may find this rather pointless. The story is that sometimes I want to inhibit IMPLICIT derived-to-base conversion while permitting EXPLICIT cast. So I decide to inherit privately (or protectedly) and befriend (some instances of) this function to achieve the effect. Since `static_cast` is a KEYWORD and not a normal identifier such as `std::static_cast`, the spelling is changed.
     template<typename T,typename S>
-    constexpr T statik_kast(S&& s){ return static_cast<T>(std::forward<S>(s)); }
+    constexpr T statik_kast(S&& s) {return static_cast<T>(std::forward<S>(s));}
 
     template<typename T,typename U >
     std::unique_ptr<T> static_pointer_cast(std::unique_ptr<U>&& r){
-        return std::unique_ptr<T>(statik_kast<typename std::unique_ptr<T>::element_type*>(r.release()));
+        return std::unique_ptr<T>(static_cast<typename std::unique_ptr<T>::pointer>(r.release()));
     }
 }
 
@@ -333,25 +273,6 @@ namespace yuki{
         fflush(fp);
     }
 
-    //[[nodiscard("If you discard the return value, you won't know if the split is possible or not.")]]
-    //inline bool split_first(std::string_view source, const char sign, std::string& lhs, std::string& rhs){
-    //    std::string_view::size_type pos=source.find(sign);
-    //    if(pos==std::string_view::npos)
-    //        return false;
-    //    lhs=std::string(source.substr(0,pos));
-    //    rhs=std::string(source.substr(pos+1,source.size()));
-    //    return true;
-    //}
-
-    //[[nodiscard("If you discard the return value, you won't know if the split is possible or not.")]]
-    //inline bool split_last(std::string_view source, const char sign, std::string& lhs, std::string& rhs){
-    //    std::string_view::size_type pos=source.rfind(sign);
-    //    if(pos==std::string_view::npos)
-    //        return false;
-    //    lhs=std::string(source.substr(0,pos));
-    //    rhs=std::string(source.substr(pos+1,source.size()));
-    //    return true;
-    //}
 
     template<typename CharT,typename Traits,typename Allocator=std::allocator<CharT>>
     std::pair<std::basic_string<CharT,Traits,Allocator>,std::basic_string<CharT,Traits,Allocator>> split_first(std::basic_string_view<CharT,Traits> source,const CharT sign,const Allocator& alloc=Allocator{}){
