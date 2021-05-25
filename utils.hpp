@@ -42,22 +42,26 @@ namespace yuki{ // Type traits and other compile-time facilities.
     template<typename T,typename U,typename... Vs>
     inline constexpr bool is_same_v = yuki::is_same<T,U,Vs...>::value;
 
-
     template<typename T,typename U,typename... Vs>
-    struct is_pairwise_different : std::conditional_t<is_pairwise_different<T,Vs...>::value && is_pairwise_different<U,Vs...>::value && is_pairwise_different<T,U>::value, std::true_type, std::false_type> {};
+    struct is_pairwise_different : std::conditional_t<is_pairwise_different<T,Vs...>::value && is_pairwise_different<U,Vs...>::value && !std::is_same_v<T,U>, std::true_type, std::false_type> {};
 
     template<typename T,typename U>
-    struct is_pairwise_different<T,U> : std::conditional_t<!std::is_same<T,U>::value,std::true_type,std::false_type> {};
+    struct is_pairwise_different<T,U> : std::conditional_t<!std::is_same_v<T,U>,std::true_type,std::false_type> {};
 
     template<typename T,typename U,typename... Vs>
     inline constexpr bool is_pairwise_different_v = is_pairwise_different<T,U,Vs...>::value;
 
+    template<typename T,typename... Us>
+    struct is_any_of : std::disjunction<std::is_same<T,Us>...> {};
 
     template<typename T,typename... Us>
-    struct is_unique : std::negation<std::disjunction<std::is_same<T,Us>...>> {};
+    inline constexpr bool is_any_of_v = is_any_of<T,Us...>::value;
 
     template<typename T,typename... Us>
-    inline constexpr bool is_unique_v = is_unique<T,Us...>::value;
+    struct is_unique : std::negation<is_any_of<T,Us...>> {};
+
+    template<typename T,typename... Us>
+    inline constexpr bool is_unique_v = !is_any_of<T,Us...>::value;
 
     template<typename T>
     struct static_assert_dummy : always_std_false_type<T> {};
@@ -66,7 +70,7 @@ namespace yuki{ // Type traits and other compile-time facilities.
     inline constexpr bool static_assert_dummy_v = always_false_v<T>;
 
 
-    struct type_switch_nomatch{};
+    struct type_switch_nomatch {};
 
     template<size_t head,size_t index,typename... Ts>
     struct type_switch_helper_;
@@ -190,9 +194,6 @@ namespace yuki{ // Type traits and other compile-time facilities.
     using int_auto_t = typename int_auto<a>::type;
 
 
-
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
     struct is_braced_init_list_convertible_helper{
         template <typename T>
         static int t_dummy(const T&); // Note: plain `T` is wrong because it will decay.
@@ -206,7 +207,10 @@ namespace yuki{ // Type traits and other compile-time facilities.
     struct is_braced_init_list_convertible : decltype(is_braced_init_list_convertible_helper::template test<T,Args...>(0)) {};
     template<typename T,typename... Args>
     inline constexpr bool is_braced_init_list_convertible_v = is_braced_init_list_convertible<T,Args...>::value;
-    #pragma GCC diagnostic pop
+
+
+    template<typename E> requires std::is_enum_v<E>
+    constexpr std::underlying_type_t<E> to_underlying(E e) noexcept {return static_cast<std::underlying_type_t<E>>(e);}
 }
 
 namespace yuki{
@@ -359,14 +363,14 @@ namespace yuki{
         return vsplit_last<CharT,Traits>(sv,sign);
     }
 
-    std::pair<std::string,std::string> split_filename(std::string_view filename){
+    inline std::pair<std::string,std::string> split_filename(std::string_view filename){
         std::string_view::size_type pos=filename.rfind('.');
         if(pos==std::string_view::npos)
             return {{filename.data(),filename.size()},{}};
         return {std::string(filename.substr(0,pos)),std::string(filename.substr(pos+1,filename.size()))};
     }
 
-    std::pair<std::string_view,std::string_view> vsplit_filename(std::string_view filename){
+    inline std::pair<std::string_view,std::string_view> vsplit_filename(std::string_view filename){
         std::string_view::size_type pos=filename.rfind('.');
         if(pos==std::string_view::npos)
             return {filename,{}};

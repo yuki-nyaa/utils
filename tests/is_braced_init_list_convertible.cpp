@@ -32,6 +32,11 @@ struct Foo7{
     Foo7(double);
 };
 
+struct Foo8{
+    Foo8(long);
+    explicit Foo8(long long);
+};
+
 int main(){
     using namespace yuki;
     static_assert(is_braced_init_list_convertible_v<Foo1>);
@@ -47,4 +52,8 @@ int main(){
     // Note: `is_braced_init_list_convertible<To,From>` is different from `std::is_convertible<From,To>`.
     static_assert(is_braced_init_list_convertible_v<Foo5,int>);
     static_assert(!std::is_convertible_v<int,Foo5>);
+    // Even if you don't consider the obvious counterexamples of narrowing conversions and aggregates, they are still different.
+    static_assert(!is_braced_init_list_convertible_v<Foo8,int>);
+    static_assert(std::is_convertible_v<int,Foo8>);
+    // This is because with the copy-list-initialization syntax, all ctors, including the explicit ones, participate in overload resolution, while in plain copy-initialization, explicit ctors are not considered at all. The copy-list-initialization only prohibits an explicit ctor being the best match.
 }
