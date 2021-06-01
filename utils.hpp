@@ -125,21 +125,21 @@ namespace yuki{ // Type traits and other compile-time facilities.
 
 
     // Automatically chooses the smallest type to hold a given value.
-    // Note that the built-in `auto` and `decltype` deduction facilities only deduce types bigger than `(unsigned) int`.
-    // Also note that this is different from `uint_least8_t` or `boost::uint_t<N>::least` which take the number of bits as argument.
+    // If two unsigned integral types happen to be of the same size, for example, on my machine `(unsigned) int` and `(unsigned) long` have the same size, than the "smaller" type (`(unsigned) int` in my example) is chosen.
+    // Note that the built-in `auto` and `decltype` deduction facilities only deduce types bigger than `(unsigned) int`. This is probably because `(unsigned) int` has better performance. So if you aren't going to store a large number of data then simply use the built-in facilities.
+    // Also note that this is different from `(u)int_least8_t` or `boost::(u)int_t<N>::least` which take the number of bits as argument.
     enum struct uint_enum {UCHAR,USHORT,UINT,ULONG,ULLONG};
     constexpr uint_enum uint_auto_f(unsigned long long a) noexcept {
-        unsigned s_char = (a<=std::numeric_limits<unsigned char>::max()) ? 1 : 0;
-        unsigned s_short = (a<=std::numeric_limits<unsigned short>::max()) ? 1 : 0;
-        unsigned s_int = (a<=std::numeric_limits<unsigned int>::max()) ? 1 : 0;
-        unsigned s_long = (a<=std::numeric_limits<unsigned long>::max()) ? 1 : 0;
-        unsigned s_llong = (a<=std::numeric_limits<unsigned long long>::max()) ? 1 : 0;
-        switch(s_char+s_short+s_int+s_long+s_llong){
-            case 1 : return uint_enum::ULLONG;
-            case 2 : return uint_enum::ULONG;
-            case 3 : return uint_enum::UINT;
-            case 4 : return uint_enum::USHORT;
-            case 5 : return uint_enum::UCHAR;
+        unsigned s_char = (a>std::numeric_limits<unsigned char>::max()) ? 1 : 0;
+        unsigned s_short = (a>std::numeric_limits<unsigned short>::max()) ? 1 : 0;
+        unsigned s_int = (a>std::numeric_limits<unsigned int>::max()) ? 1 : 0;
+        unsigned s_long = (a>std::numeric_limits<unsigned long>::max()) ? 1 : 0;
+        switch(s_char+s_short+s_int+s_long){
+            case 0 : return uint_enum::UCHAR;
+            case 1 : return uint_enum::USHORT;
+            case 2 : return uint_enum::UINT;
+            case 3 : return uint_enum::ULONG;
+            case 4 : return uint_enum::ULLONG;
         }
         return uint_enum::ULLONG; // Fallback.
     }
@@ -147,32 +147,30 @@ namespace yuki{ // Type traits and other compile-time facilities.
     template<unsigned long long a,uint_enum flag = uint_auto_f(a)>
     struct uint_auto;
     template<unsigned long long a>
-    struct uint_auto<a,uint_enum::ULLONG> {typedef unsigned long long type;};
-    template<unsigned long long a>
-    struct uint_auto<a,uint_enum::ULONG> {typedef unsigned long type;};
-    template<unsigned long long a>
-    struct uint_auto<a,uint_enum::UINT> {typedef unsigned int type;};
+    struct uint_auto<a,uint_enum::UCHAR> {typedef unsigned char type;};
     template<unsigned long long a>
     struct uint_auto<a,uint_enum::USHORT> {typedef unsigned short type;};
     template<unsigned long long a>
-    struct uint_auto<a,uint_enum::UCHAR> {typedef unsigned char type;};
-
+    struct uint_auto<a,uint_enum::UINT> {typedef unsigned int type;};
+    template<unsigned long long a>
+    struct uint_auto<a,uint_enum::ULONG> {typedef unsigned long type;};
+    template<unsigned long long a>
+    struct uint_auto<a,uint_enum::ULLONG> {typedef unsigned long long type;};
     template<unsigned long long a>
     using uint_auto_t = typename uint_auto<a>::type;
 
     enum struct int_enum {CHAR,SHORT,INT,LONG,LLONG};
     constexpr int_enum int_auto_f(long long a) noexcept {
-        unsigned s_char = (a<=std::numeric_limits<signed char>::max() && a>=std::numeric_limits<signed char>::lowest()) ? 1 : 0;
-        unsigned s_short = (a<=std::numeric_limits<short>::max() && a>=std::numeric_limits<short>::lowest()) ? 1 : 0;
-        unsigned s_int = (a<=std::numeric_limits<int>::max() && a>=std::numeric_limits<int>::lowest()) ? 1 : 0;
-        unsigned s_long = (a<=std::numeric_limits<long>::max() && a>=std::numeric_limits<long>::lowest()) ? 1 : 0;
-        unsigned s_llong = (a<=std::numeric_limits<long long>::max() && a>=std::numeric_limits<long long>::lowest()) ? 1 : 0;
-        switch(s_char+s_short+s_int+s_long+s_llong){
-            case 1 : return int_enum::LLONG;
-            case 2 : return int_enum::LONG;
-            case 3 : return int_enum::INT;
-            case 4 : return int_enum::SHORT;
-            case 5 : return int_enum::CHAR;
+        unsigned s_char = (a>std::numeric_limits<signed char>::max() || a<std::numeric_limits<signed char>::lowest()) ? 1 : 0;
+        unsigned s_short = (a>std::numeric_limits<short>::max() || a<std::numeric_limits<short>::lowest()) ? 1 : 0;
+        unsigned s_int = (a>std::numeric_limits<int>::max() || a<std::numeric_limits<int>::lowest()) ? 1 : 0;
+        unsigned s_long = (a>std::numeric_limits<long>::max() || a<std::numeric_limits<long>::lowest()) ? 1 : 0;
+        switch(s_char+s_short+s_int+s_long){
+            case 0 : return int_enum::CHAR;
+            case 1 : return int_enum::SHORT;
+            case 2 : return int_enum::INT;
+            case 3 : return int_enum::LONG;
+            case 4 : return int_enum::LLONG;
         }
         return int_enum::LLONG; // Fallback.
     }
@@ -180,15 +178,15 @@ namespace yuki{ // Type traits and other compile-time facilities.
     template<long long a,int_enum flag = int_auto_f(a)>
     struct int_auto;
     template<long long a>
-    struct int_auto<a,int_enum::LLONG> {typedef long long type;};
-    template<long long a>
-    struct int_auto<a,int_enum::LONG> {typedef long type;};
-    template<long long a>
-    struct int_auto<a,int_enum::INT> {typedef int type;};
+    struct int_auto<a,int_enum::CHAR> {typedef signed char type;};
     template<long long a>
     struct int_auto<a,int_enum::SHORT> {typedef short type;};
     template<long long a>
-    struct int_auto<a,int_enum::CHAR> {typedef signed char type;};
+    struct int_auto<a,int_enum::INT> {typedef int type;};
+    template<long long a>
+    struct int_auto<a,int_enum::LONG> {typedef long type;};
+    template<long long a>
+    struct int_auto<a,int_enum::LLONG> {typedef long long type;};
 
     template<long long a>
     using int_auto_t = typename int_auto<a>::type;
