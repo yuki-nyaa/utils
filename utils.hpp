@@ -1,4 +1,5 @@
 #pragma once
+#include<cassert>
 #include<string>
 #include<type_traits>
 #include<utility>
@@ -503,5 +504,59 @@ namespace yuki{
             constexpr Compare get_compare() const noexcept {return comp;}
             constexpr void set_compare(const Compare& comp_other) noexcept(std::is_nothrow_copy_assignable_v<Compare>) {comp=comp_other;}
             constexpr bool operator()(const T& lhs,const T& rhs) const {return !comp(lhs,rhs) && !comp(rhs,lhs);}
+    };
+}
+namespace yuki{
+    struct U8Char{
+        unsigned char bytes[4];
+        static constexpr unsigned char utf8_follow = 0b10000000;
+        static constexpr unsigned char utf8_initial_2 = 0b11000000;
+        static constexpr unsigned char utf8_initial_3 = 0b11100000;
+        static constexpr unsigned char utf8_initial_4 = 0b11110000;
+        friend constexpr bool operator==(const U8Char& lhs,const U8Char& rhs) noexcept {return lhs.bytes[0]==rhs.bytes[0] && lhs.bytes[1]==rhs.bytes[1] && lhs.bytes[2]==rhs.bytes[2] && lhs.bytes[3]==rhs.bytes[3];}
+        constexpr U8Char() noexcept : bytes{} {}
+        U8Char(const char* source,size_t offset_in_cp=0) noexcept {
+            assert(static_cast<unsigned char>(*source)<utf8_follow || static_cast<unsigned char>(*source)>=utf8_initial_2 || static_cast<unsigned char>(*source)>=utf8_initial_3 || static_cast<unsigned char>(*source)>=utf8_initial_4);
+            while(offset_in_cp){
+                unsigned if_2 = (static_cast<unsigned char>(*source)>=utf8_initial_2) ? 1 : 0 ;
+                unsigned if_3 = (static_cast<unsigned char>(*source)>=utf8_initial_3) ? 1 : 0 ;
+                unsigned if_4 = (static_cast<unsigned char>(*source)>=utf8_initial_4) ? 1 : 0 ;
+                source+=(1+if_2+if_3+if_4); // Possible sum : 1,2,3,4
+                --offset_in_cp;
+            }
+            if(static_cast<unsigned char>(*source)<utf8_follow){
+                bytes[0]=0;
+                bytes[1]=0;
+                bytes[2]=0;
+                bytes[3]=*source;
+            }else{
+                unsigned if_2 = (static_cast<unsigned char>(*source)>=utf8_initial_2) ? 1 : 0 ;
+                unsigned if_3 = (static_cast<unsigned char>(*source)>=utf8_initial_3) ? 1 : 0 ;
+                unsigned if_4 = (static_cast<unsigned char>(*source)>=utf8_initial_4) ? 1 : 0 ;
+                switch(if_2+if_3+if_4){
+                    case 1 : {
+                        bytes[0]=0;
+                        bytes[1]=0;
+                        bytes[2]=*source++;
+                        bytes[3]=*source;
+                        return;
+                    }
+                    case 2 : {
+                        bytes[0]=0;
+                        bytes[1]=*source++;
+                        bytes[2]=*source++;
+                        bytes[3]=*source;
+                        return;
+                    }
+                    case 3 : {
+                        bytes[0]=*source++;
+                        bytes[1]=*source++;
+                        bytes[2]=*source++;
+                        bytes[3]=*source;
+                        return;
+                    }
+                }
+            }
+        }
     };
 }
