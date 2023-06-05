@@ -1,0 +1,83 @@
+const_iterator first_equiv_greater(const K& k) const {
+    size_type count = size();
+    if(count==0 || C::compare(KV::project(back()),k)) // back()<k
+        return end();
+
+    size_type step;
+    const_iterator first = begin();
+    const_iterator it;
+    while(count>0){
+        step = count/2;
+        it = first + step;
+        if(!C::compare(KV::project(*it),k)){ // *it >= k
+            count = step;
+        }else{
+            first = ++it;
+            count -= step+1;
+        }
+    }
+    return first;
+}
+
+const_iterator first_greater(const K& k) const {
+    size_type count = size();
+    if(count==0 || !C::compare(k,KV::project(back()))) // back()<=k
+        return end();
+
+    size_type step;
+    const_iterator first = begin();
+    const_iterator it;
+    while(count>0){
+        step = count/2;
+        it = first + step;
+        if(C::compare(k,KV::project(*it))){ // *it > k
+            count = step;
+        }else{
+            first = ++it;
+            count -= step+1;
+        }
+    }
+    return first;
+}
+
+const_iterator last_less(const K& k) const {
+    size_type count = size();
+    if(count==0 || !C::compare(KV::project(front()),k)) // front()>=k
+        return end();
+
+    size_type step = count/2;
+    const_iterator first = begin();
+    const_iterator it = first+step;
+    while(step>0){
+        if(C::compare(KV::project(*it),k)){ // *it < k
+            first = it;
+            count -= step;
+        }else{
+            count = step;
+        }
+        step = count/2;
+        it = first + step;
+    }
+    return first;
+}
+
+const_iterator last_less_equiv(const K& k) const {
+    size_type count = size();
+    if(count==0 || C::compare(k,KV::project(front()))) // front()>k
+        return end();
+
+    size_type step = count/2;
+    const_iterator first = begin();
+    const_iterator it = first+step;
+    while(step>0){
+        if(!C::compare(k,KV::project(*it))){ // *it <= k
+            first = it;
+            count -= step;
+        }else{
+            count = step;
+        }
+        step = count/2;
+        it = first + step;
+    }
+    return first;
+}

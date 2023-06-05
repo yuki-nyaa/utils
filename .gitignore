@@ -1,0 +1,7 @@
+*.exe
+build
+release
+.vscode
+*.txt
+!ugen/*.txt
+!CMakeLists.txt
