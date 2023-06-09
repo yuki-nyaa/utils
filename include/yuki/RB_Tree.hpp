@@ -483,22 +483,17 @@ struct RB_Tree : protected KV,protected C,protected A{
         other.s_ = 0;
     }
 
-    template<typename Before,typename... After>
-    RB_Tree isomorphic_copy(Before&& before,After&&... after) const {
-        RB_Tree ret(simple_copy_tag,*this);
+    template<typename K2,typename V2,typename KV2,typename C2,typename A2>
+    friend struct RB_Tree;
+
+    template<typename Target=RB_Tree,typename Before,typename... After>
+    Target isomorphic_copy(Before&& before,After&&... after) const {
+        Target ret;
+        ret.s_ = s_;
         ret.root_ = ret.clone(root_,nullptr,std::forward<Before>(before),std::forward<After>(after)...);
         return ret;
     }
   private:
-    struct simple_copy_tag_t{} simple_copy_tag;
-    RB_Tree(simple_copy_tag_t,const RB_Tree& other) noexcept :
-        KV(yuki::select_on_container_copy_construction<KV>(other)),
-        C(yuki::select_on_container_copy_construction<C>(other)),
-        A(yuki::select_on_container_copy_construction<A>(other)),
-        root_(nullptr),
-        s_(other.s_)
-    {}
-
     pointer insert_leaf(const K& k) const {
         pointer y = nullptr;
         pointer x = root_;
@@ -702,18 +697,19 @@ struct RB_Tree : protected KV,protected C,protected A{
         }
     }
 
-    pointer clone(const pointer other,const pointer parent){
+    template<typename pointer2>
+    pointer clone(const pointer2 other,const pointer parent){
         if(other){
             const pointer n = A::allocate();
             using yuki::iterator_unwrap;
             ::new(iterator_unwrap(n)) node_type{other->value,other->is_black,parent,clone(other->left,n),clone(other->right,n)};
             return n;
         }
-        return other;
+        return nullptr;
     }
 
-    template<typename Before,typename... After>
-    pointer clone(const pointer other,const pointer parent,Before&& before,After&&... after){
+    template<typename pointer2,typename Before,typename... After>
+    pointer clone(const pointer2 other,const pointer parent,Before&& before,After&&... after){
         if(other){
             const pointer n = A::allocate();
             using yuki::iterator_unwrap;
@@ -721,7 +717,7 @@ struct RB_Tree : protected KV,protected C,protected A{
             (...,std::forward<After>(after)(n->value));
             return n;
         }
-        return other;
+        return nullptr;
     }
 
     pointer take_other(const pointer other,const pointer parent,A& a_other){
@@ -733,7 +729,7 @@ struct RB_Tree : protected KV,protected C,protected A{
             a_other.deallocate(other);
             return n;
         }
-        return other;
+        return nullptr;
     }
 
     template<typename A2>
