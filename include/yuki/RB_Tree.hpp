@@ -6,15 +6,36 @@
 #include<iterator>
 
 namespace yuki{
+inline constexpr struct rb_tree_node_variadic_tag_t_ {} rb_tree_node_variadic_tag_;
+inline constexpr struct rb_tree_node_aggregate_tag_t_ {} rb_tree_node_aggregate_tag_;
+
 template<typename V>
 struct RB_Tree_Node{
     typedef RB_Tree_Node* pointer;
 
     V value;
-    bool is_black = false;
-    RB_Tree_Node* parent = nullptr;
-    RB_Tree_Node* left = nullptr;
-    RB_Tree_Node* right = nullptr;
+    bool is_black;
+    RB_Tree_Node* parent;
+    RB_Tree_Node* left;
+    RB_Tree_Node* right;
+
+    template<typename... Args>
+    constexpr RB_Tree_Node(rb_tree_node_variadic_tag_t_,Args&&... args) noexcept :
+        value(std::forward<Args>(args)...),
+        is_black(false),
+        parent(nullptr),
+        left(nullptr),
+        right(nullptr)
+    {}
+
+    template<typename V2>
+    constexpr RB_Tree_Node(rb_tree_node_aggregate_tag_t_,V2&& v2,const bool ibp,const pointer pp,const pointer lp,const pointer rp) noexcept :
+        value(std::forward<V2>(v2)),
+        is_black(ibp),
+        parent(pp),
+        left(lp),
+        right(rp)
+    {}
 };
 
 namespace tree_op{
@@ -216,29 +237,50 @@ struct RB_Tree : protected KV,protected C,protected A{
     constexpr size_type size() const {return s_;}
 
     const_iterator begin() const {return min();}
+    /// @note The end-iterator is not decrementable. If you want to do back-traversal you should use `max()`.
     constexpr const_iterator end() const {return nullptr;}
 
     /// @note `f` should not change the keys.
     template<typename F>
-    void unordered_traverse(F&& f){unordered_traverse_at(root_,std::forward<F>(f));}
+    void recursive_traverse(F&& f){recursive_traverse_at(root_,std::forward<F>(f));}
     template<typename F>
-    void unordered_traverse(F&& f) const {unordered_traverse_at(root_,std::forward<F>(f));}
+    void recursive_traverse(F&& f) const {recursive_traverse_at(root_,std::forward<F>(f));}
+    template<typename F>
+    void recursive_backtraverse(F&& f){recursive_backtraverse_at(root_,std::forward<F>(f));}
+    template<typename F>
+    void recursive_backtraverse(F&& f) const {recursive_backtraverse_at(root_,std::forward<F>(f));}
   private:
     /// @note `f` should not change the keys.
     template<typename F>
-    void unordered_traverse_at(const pointer p,F&& f){
+    void recursive_traverse_at(const pointer p,F&& f){
         if(p){
+            recursive_traverse_at(p->left,std::forward<F>(f));
             std::forward<F>(f)(p->value);
-            unordered_traverse_at(p->left,std::forward<F>(f));
-            unordered_traverse_at(p->right,std::forward<F>(f));
+            recursive_traverse_at(p->right,std::forward<F>(f));
         }
     }
     template<typename F>
-    void unordered_traverse_at(const const_pointer p,F&& f) const {
+    void recursive_traverse_at(const const_pointer p,F&& f) const {
         if(p){
+            recursive_traverse_at(p->left,std::forward<F>(f));
             std::forward<F>(f)(p->value);
-            unordered_traverse_at(p->left,std::forward<F>(f));
-            unordered_traverse_at(p->right,std::forward<F>(f));
+            recursive_traverse_at(p->right,std::forward<F>(f));
+        }
+    }
+    template<typename F>
+    void recursive_backtraverse_at(const pointer p,F&& f){
+        if(p){
+            recursive_backtraverse_at(p->right,std::forward<F>(f));
+            std::forward<F>(f)(p->value);
+            recursive_backtraverse_at(p->left,std::forward<F>(f));
+        }
+    }
+    template<typename F>
+    void recursive_backtraverse_at(const const_pointer p,F&& f) const {
+        if(p){
+            recursive_backtraverse_at(p->right,std::forward<F>(f));
+            std::forward<F>(f)(p->value);
+            recursive_backtraverse_at(p->left,std::forward<F>(f));
         }
     }
   public:
@@ -330,7 +372,7 @@ struct RB_Tree : protected KV,protected C,protected A{
     const_iterator emplace(Args&&... args){
         const pointer z = A::allocate();
         using yuki::iterator_unwrap;
-        ::new(iterator_unwrap(z)) node_type{{std::forward<Args>(args)...}};
+        ::new(iterator_unwrap(z)) node_type(rb_tree_node_variadic_tag_,std::forward<Args>(args)...);
         insert_at(z,insert_leaf(KV::operator()(z->value)));
         return z;
     }
@@ -353,7 +395,7 @@ struct RB_Tree : protected KV,protected C,protected A{
         if(ibp.has_inserted){
             const pointer z = A::allocate();
             using yuki::iterator_unwrap;
-            ::new(iterator_unwrap(z)) node_type{{std::forward<Args>(args)...}};
+            ::new(iterator_unwrap(z)) node_type(rb_tree_node_variadic_tag_,std::forward<Args>(args)...);
             insert_at(z,ibp.iterator);
             return {z,ibp.has_inserted};
         }else{
@@ -462,16 +504,22 @@ struct RB_Tree : protected KV,protected C,protected A{
         other.s_ = 0;
     }
 
-    template<typename K2,typename KV2,typename C2,typename A2,typename... M>
-    void merge_unique(const RB_Tree<K2,V,KV2,C2,A2>& other,M&&... m){
+    template<typename K2,typename V2,typename KV2,typename C2,typename A2,typename... M>
+    void merge_unique_tp(const RB_Tree<K2,V2,KV2,C2,A2>& other,M&&... m){
+        merge_copy_unique<A2>(other.root_,std::forward<M>(m)...);
+    }
+
+    template<typename K2,typename V2,typename KV2,typename C2,typename A2,typename... M>
+        requires (std::is_same_v<V2,V> || requires{typename KV::is_transparent;} || requires{typename C::is_transparent;})
+    void merge_unique(const RB_Tree<K2,V2,KV2,C2,A2>& other,M&&... m){
         merge_copy_unique<A2>(other.root_,std::forward<M>(m)...);
     }
 
     /// @pre `this!=&other`
-    template<typename K2,typename KV2,typename C2,typename A2,typename... M>
-    void merge_unique(RB_Tree<K2,V,KV2,C2,A2>&& other,M&&... m){
-        assert(this!=&other);
+    template<typename K2,typename V2,typename KV2,typename C2,typename A2,typename... M>
+    void merge_unique_tp(RB_Tree<K2,V2,KV2,C2,A2>&& other,M&&... m){
         if constexpr(std::is_same_v<RB_Tree<K,V,KV,C,A>,RB_Tree<K2,V,KV2,C2,A2>>){
+            assert(this!=&other);
             if((A::propagate_on_container_swap || static_cast<const A&>(*this)==static_cast<const A&>(other)) && s_<other.s_)
                 swap(*this,other);
         }
@@ -481,6 +529,13 @@ struct RB_Tree : protected KV,protected C,protected A{
             merge_move_unique<A2>(other.root_,other,std::forward<M>(m)...);
         other.root_ = nullptr;
         other.s_ = 0;
+    }
+
+    /// @pre `this!=&other`
+    template<typename K2,typename V2,typename KV2,typename C2,typename A2,typename... M>
+        requires (std::is_same_v<V2,V> || requires{typename KV::is_transparent;} || requires{typename C::is_transparent;})
+    void merge_unique(RB_Tree<K2,V2,KV2,C2,A2>&& other,M&&... m){
+        merge_unique_tp(std::move(other),std::forward<M>(m)...);
     }
 
     template<typename K2,typename V2,typename KV2,typename C2,typename A2>
@@ -702,7 +757,7 @@ struct RB_Tree : protected KV,protected C,protected A{
         if(other){
             const pointer n = A::allocate();
             using yuki::iterator_unwrap;
-            ::new(iterator_unwrap(n)) node_type{other->value,other->is_black,parent,clone(other->left,n),clone(other->right,n)};
+            ::new(iterator_unwrap(n)) node_type(rb_tree_node_aggregate_tag_,other->value,other->is_black,parent,clone(other->left,n),clone(other->right,n));
             return n;
         }
         return nullptr;
@@ -713,7 +768,7 @@ struct RB_Tree : protected KV,protected C,protected A{
         if(other){
             const pointer n = A::allocate();
             using yuki::iterator_unwrap;
-            ::new(iterator_unwrap(n)) node_type{std::forward<Before>(before)(other->value),other->is_black,parent,clone(other->left,n,std::forward<Before>(before),std::forward<After>(after)...),clone(other->right,n,std::forward<Before>(before),std::forward<After>(after)...)};
+            ::new(iterator_unwrap(n)) node_type(rb_tree_node_aggregate_tag_,std::forward<Before>(before)(other->value),other->is_black,parent,clone(other->left,n,std::forward<Before>(before),std::forward<After>(after)...),clone(other->right,n,std::forward<Before>(before),std::forward<After>(after)...));
             (...,std::forward<After>(after)(n->value));
             return n;
         }
@@ -724,7 +779,7 @@ struct RB_Tree : protected KV,protected C,protected A{
         if(other){
             const pointer n = A::allocate();
             using yuki::iterator_unwrap;
-            ::new(iterator_unwrap(n)) node_type{std::move(other->value),other->is_black,parent,take_other(other->left,n),take_other(other->right,n)};
+            ::new(iterator_unwrap(n)) node_type(rb_tree_node_aggregate_tag_,std::move(other->value),other->is_black,parent,take_other(other->left,n),take_other(other->right,n));
             other->~node_type();
             a_other.deallocate(other);
             return n;
@@ -770,7 +825,7 @@ struct RB_Tree : protected KV,protected C,protected A{
         if(ibp.has_inserted){
             const pointer z = A::allocate();
             using yuki::iterator_unwrap;
-            ::new(iterator_unwrap(z)) node_type{std::forward<V2>(v)};
+            ::new(iterator_unwrap(z)) node_type(rb_tree_node_variadic_tag_,std::forward<V2>(v));
             insert_at(z,ibp.iterator);
         }else{
             (...,std::forward<M>(m)(ibp.iterator->value,std::forward<V2>(v)));

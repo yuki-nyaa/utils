@@ -49,7 +49,21 @@ add_custom_command(
         ${PROJECT_SOURCE_DIR}/include/yuki/unicode/mirror.hpp
     COMMAND ugen ugen include/yuki/unicode lib/unicode
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-    DEPENDS ugen build-time-make-directory
+    DEPENDS
+        ugen
+        build-time-make-directory
+        ugen/extracted/DerivedGeneralCategory.txt
+        ugen/BidiMirroring.txt
+        ugen/Blocks.txt
+        ugen/CaseFolding.txt
+        ugen/DerivedCoreProperties.txt
+        ugen/PropertyAliases.txt
+        ugen/PropertyValueAliases.txt
+        ugen/PropList.txt
+        ugen/ScriptExtensions.txt
+        ugen/Scripts.txt
+        ugen/SpecialCasing.txt
+        ugen/UnicodeData.txt
     COMMENT "ugen-ing")
 
 add_custom_target(ugen_output

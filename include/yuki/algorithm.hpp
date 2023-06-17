@@ -54,9 +54,9 @@ constexpr It first_equiv_greater(It first,const It end,const K& k,KV&& kv,C&& co
     return first;
 }
 
-template<typename It,typename K>
-constexpr It first_equiv_greater(It first,const It end,const K& k){
-    return first_equiv_greater(first,end,k,yuki::Iden{},yuki::Less<void>{});
+template<typename It>
+constexpr It first_equiv_greater(It first,const It end,const std::remove_cvref_t<decltype(*first)>& k){
+    return first_equiv_greater(first,end,k,yuki::Iden{},yuki::Less<std::remove_cvref_t<decltype(*first)>>{});
 }
 
 template<typename It,typename K,typename KV,typename C>
@@ -80,9 +80,9 @@ constexpr It first_greater(It first,const It end,const K& k,KV&& kv,C&& comp){
     return first;
 }
 
-template<typename It,typename K>
-constexpr It first_greater(It first,const It end,const K& k){
-    return first_greater(first,end,k,yuki::Iden{},yuki::Less<void>{});
+template<typename It>
+constexpr It first_greater(It first,const It end,const std::remove_cvref_t<decltype(*first)>& k){
+    return first_greater(first,end,k,yuki::Iden{},yuki::Less<std::remove_cvref_t<decltype(*first)>>{});
 }
 
 template<typename It,typename K,typename KV,typename C>
@@ -106,9 +106,9 @@ constexpr It last_less(It first,const It end,const K& k,KV&& kv,C&& comp){
     return first;
 }
 
-template<typename It,typename K>
-constexpr It last_less(It first,const It end,const K& k){
-    return last_less(first,end,k,yuki::Iden{},yuki::Less<void>{});
+template<typename It>
+constexpr It last_less(It first,const It end,const std::remove_cvref_t<decltype(*first)>& k){
+    return last_less(first,end,k,yuki::Iden{},yuki::Less<std::remove_cvref_t<decltype(*first)>>{});
 }
 
 template<typename It,typename K,typename KV,typename C>
@@ -132,9 +132,9 @@ constexpr It last_less_equiv(It first,const It end,const K& k,KV&& kv,C&& comp){
     return first;
 }
 
-template<typename It,typename K>
-constexpr It last_less_equiv(It first,const It end,const K& k){
-    return last_less_equiv(first,end,k,yuki::Iden{},yuki::Less<void>{});
+template<typename It>
+constexpr It last_less_equiv(It first,const It end,const std::remove_cvref_t<decltype(*first)>& k){
+    return last_less_equiv(first,end,k,yuki::Iden{},yuki::Less<std::remove_cvref_t<decltype(*first)>>{});
 }
 
 template<typename It,typename K,typename KV,typename C>

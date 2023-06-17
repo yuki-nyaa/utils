@@ -20,37 +20,37 @@ template<
     typename A,
     typename... Others>
 struct Basic_VMultiSet : protected B<K,Vec,Vec_Zeroth<Vec>,C,A,Others...>{
-    typedef B<K,Vec,Vec_Zeroth<Vec>,C,A,Others...> Tree_Base;
+    typedef B<K,Vec,Vec_Zeroth<Vec>,C,A,Others...> tree_type;
 
-    using typename Tree_Base::key_type;
-    using typename Tree_Base::value_type;
-    using typename Tree_Base::key_compare;
-    using typename Tree_Base::allocator_type;
-    using typename Tree_Base::pointer;
-    using typename Tree_Base::const_pointer;
-    using typename Tree_Base::size_type;
-    using typename Tree_Base::difference_type;
+    using typename tree_type::key_type;
+    using typename tree_type::value_type;
+    using typename tree_type::key_compare;
+    using typename tree_type::allocator_type;
+    using typename tree_type::pointer;
+    using typename tree_type::const_pointer;
+    using typename tree_type::size_type;
+    using typename tree_type::difference_type;
 
     typedef Vec bucket_type;
 
-    using Tree_Base::Tree_Base;
-    friend constexpr void swap(Basic_VMultiSet& lhs,Basic_VMultiSet& rhs) noexcept {swap(static_cast<Tree_Base&>(lhs),static_cast<Tree_Base&>(rhs));}
+    using tree_type::tree_type;
+    friend constexpr void swap(Basic_VMultiSet& lhs,Basic_VMultiSet& rhs) noexcept {swap(static_cast<tree_type&>(lhs),static_cast<tree_type&>(rhs));}
 
-    constexpr Tree_Base& tree_base() {return *this;}
-    constexpr const Tree_Base& tree_base() const {return *this;}
+    constexpr tree_type& tree() {return *this;}
+    constexpr const tree_type& tree() const {return *this;}
 
-    using Tree_Base::clear;
-    using Tree_Base::empty;
-    constexpr size_type bucket_count() const {return Tree_Base::size();}
+    using tree_type::clear;
+    using tree_type::empty;
+    constexpr size_type bucket_count() const {return tree_type::size();}
     constexpr size_type size() const {return s_;}
 
-    typedef typename Tree_Base::non_const_iterator non_const_bucket_iterator;
-    typedef typename Tree_Base::const_iterator const_bucket_iterator;
+    typedef typename tree_type::non_const_iterator non_const_bucket_iterator;
+    typedef typename tree_type::const_iterator const_bucket_iterator;
     typedef typename Vec::iterator non_const_local_iterator;
     typedef typename Vec::const_iterator const_local_iterator;
 
-    const_bucket_iterator bucket_begin() const {return Tree_Base::begin();}
-    constexpr const_bucket_iterator bucket_end() const {return Tree_Base::end();}
+    const_bucket_iterator bucket_begin() const {return tree_type::begin();}
+    constexpr const_bucket_iterator bucket_end() const {return tree_type::end();}
   private:
     template<typename VMSp,typename IB>
     struct iterator_tp_{
@@ -104,28 +104,28 @@ struct Basic_VMultiSet : protected B<K,Vec,Vec_Zeroth<Vec>,C,A,Others...>{
     typedef iterator_tp_<Basic_VMultiSet*,non_const_bucket_iterator> non_const_iterator;
     typedef iterator_tp_<const Basic_VMultiSet*,const_bucket_iterator> const_iterator;
 
-    const_iterator begin() const {return {this,Tree_Base::begin()};}
-    const_iterator end() const {return {this,Tree_Base::end()};}
+    const_iterator begin() const {return {this,tree_type::begin()};}
+    const_iterator end() const {return {this,tree_type::end()};}
 
-    const_iterator min() const { return {this,Tree_Base::min()};}
+    const_iterator min() const { return {this,tree_type::min()};}
     const_iterator max() const {
-        const const_bucket_iterator m = Tree_Base::max();
-        const typename bucket_type::size_type l = m!=Tree_Base::end() ? m->size()-1 : 0;
+        const const_bucket_iterator m = tree_type::max();
+        const typename bucket_type::size_type l = m!=tree_type::end() ? m->size()-1 : 0;
         return {this,m,l};
     }
 
-    const_iterator first_greater(const K& k) const {return {this,Tree_Base::first_greater(k)};}
-    const_iterator first_equiv_greater(const K& k) const {return {this,Tree_Base::first_equiv_greater(k)};}
-    const_iterator find(const K& k) const {return {this,Tree_Base::find_any(k)};}
-    using Tree_Base::contains;
+    const_iterator first_greater(const K& k) const {return {this,tree_type::first_greater(k)};}
+    const_iterator first_equiv_greater(const K& k) const {return {this,tree_type::first_equiv_greater(k)};}
+    const_iterator find(const K& k) const {return {this,tree_type::find_any(k)};}
+    using tree_type::contains;
 
     size_type count(const K& k) const {
-        const const_bucket_iterator f = Tree_Base::find_any(k);
-        return f!=Tree_Base::end() ? f->size() : 0;
+        const const_bucket_iterator f = tree_type::find_any(k);
+        return f!=tree_type::end() ? f->size() : 0;
     }
 
     const_iterator insert(const K& k){
-        const yuki::IB_Pair<const_bucket_iterator> ibp = Tree_Base::template emplace_unique_at(k,yuki::from_variadic_tag,k);
+        const yuki::IB_Pair<const_bucket_iterator> ibp = tree_type::template emplace_unique_at(k,yuki::from_variadic_tag,k);
         typename bucket_type::size_type l=0;
         using yuki::const_kast;
         value_type& v = *const_kast(ibp.iterator);
@@ -138,7 +138,7 @@ struct Basic_VMultiSet : protected B<K,Vec,Vec_Zeroth<Vec>,C,A,Others...>{
     }
 
     const_iterator insert(K&& k){
-        const yuki::IB_Pair<const_bucket_iterator> ibp = Tree_Base::template emplace_unique_at(k,yuki::from_variadic_tag,std::move(k));
+        const yuki::IB_Pair<const_bucket_iterator> ibp = tree_type::template emplace_unique_at(k,yuki::from_variadic_tag,std::move(k));
         typename bucket_type::size_type l=0;
         using yuki::const_kast;
         value_type& v = *const_kast(ibp.iterator);
@@ -155,15 +155,15 @@ struct Basic_VMultiSet : protected B<K,Vec,Vec_Zeroth<Vec>,C,A,Others...>{
         const non_const_bucket_iterator ncb = const_kast(i.bucket);
         ncb->erase(i.bucket->begin()+i.local);
         if(ncb->empty())
-            Tree_Base::erase(ncb);
+            tree_type::erase(ncb);
         --s_;
     }
 
     size_type erase(const K& k){
-        const const_bucket_iterator i = Tree_Base::find_any(k);
-        if(i!=Tree_Base::end()){
+        const const_bucket_iterator i = tree_type::find_any(k);
+        if(i!=tree_type::end()){
             size_type bs = i->size();
-            Tree_Base::erase(i);
+            tree_type::erase(i);
             s_ -= bs;
             return bs;
         }

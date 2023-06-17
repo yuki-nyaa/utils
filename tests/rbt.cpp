@@ -39,7 +39,7 @@ int main(){
 
     //{
     //Tree<Big>::a t;
-    ////t.tree_base().reserve(100);
+    ////t.tree().reserve(100);
 
     //yuki::Vector<decltype(t.begin())> its(yuki::reserve_tag,2000);
 
@@ -180,18 +180,22 @@ int main(){
     {
     yuki::Map<std::string,std::string> map;
     map.insert_or_assign("abc","def");
+    map.insert_or_assign("xyz","abc");
     map["abc"]="efg";
     printf("%s",map["abc"].c_str());
     yuki::Map<std::string,std::string> map2=std::move(map);
     printf(" %zu %zu",map.size(),map2.size());
-    const yuki::Map<std::string,std::string> map3(yuki::from_ordered_tag,map2.tree_base().isomorphic_copy(yuki::Iden{},[](yuki::KM_Pair<const std::string,std::string>& kmp) static {kmp.mapped.push_back('0');}));
+    const yuki::Map<std::string,std::string> map3(yuki::from_ordered_tag,map2.tree().isomorphic_copy(yuki::Iden{},[](yuki::KM_Pair<const std::string,std::string>& kmp) static {kmp.mapped.push_back('0');}));
     printf("\n%s",map3["abc"].c_str());
     struct Traverser{
         size_t total=0;
         void operator()(const yuki::KM_Pair<const std::string,std::string>& kmp) {(total+=kmp.key.size())+=kmp.mapped.size();}
     } traverser;
-    map3.tree_base().unordered_traverse(traverser);
+    map3.tree().recursive_traverse(traverser);
     printf("\n%zu",traverser.total);
+    printf("\n");
+    map2.merge(map3);
+    map2.tree().recursive_backtraverse([](const yuki::KM_Pair<const std::string,std::string>& kmp)static{printf("%s %s\n",kmp.key.c_str(),kmp.mapped.c_str());});
     printf("\n");
     }
 
@@ -205,26 +209,26 @@ int main(){
     {
     Tree<unsigned>::a t;
     t.emplace(1); t.emplace(3); t.emplace(5); t.emplace(7); t.emplace(9);
-    Tree<unsigned>::a t2;
-    t2.emplace(2); t2.emplace(4); t2.emplace(6); t2.emplace(8); t2.emplace(9); t2.emplace(10);
+    Tree<int>::a t2;
+    t2.emplace(-2); t2.emplace(-4); t2.emplace(6); t2.emplace(8); t2.emplace(9); t2.emplace(10);
 
     Tree<unsigned>::a t3 = t;
-    t3.merge(t2);
+    t3.merge_unique(t2);
 
     for(auto i = t3.begin();i!=t3.end();++i)
         printf("%u ",*i);
     printf("\n");
     for(auto i = t2.begin();i!=t2.end();++i)
-        printf("%u ",*i);
+        printf("%d ",*i);
     printf("\n");
 
-    t3.merge(std::move(t2));
+    t3.merge_unique(std::move(t2));
 
     for(auto i = t3.begin();i!=t3.end();++i)
         printf("%u ",*i);
     printf("\n");
     for(auto i = t2.begin();i!=t2.end();++i)
-        printf("%u ",*i);
+        printf("%d ",*i);
     printf("\n");
     }
 }

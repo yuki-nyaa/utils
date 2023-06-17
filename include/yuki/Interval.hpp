@@ -142,7 +142,7 @@ struct IntegralCIs_OV : private yuki::Ordered_Vector<CInterval<I>,yuki::Less<CIn
   private:
     typedef yuki::Ordered_Vector<CInterval<I>,yuki::Less<CInterval<I>>,A,EC> OV_;
   public:
-    using typename OV_::Vec_Base;
+    using typename OV_::vector_type;
     using typename OV_::key_type;
     using typename OV_::value_type;
     using typename OV_::key_of_value_type;
@@ -176,9 +176,9 @@ struct IntegralCIs_OV : private yuki::Ordered_Vector<CInterval<I>,yuki::Less<CIn
     using OV_::size;
     using OV_::capacity;
 
-    using OV_::vec_base;
-    OV_& ov_base() {return static_cast<OV_&>(*this);}
-    const OV_& ov_base() const {return static_cast<OV_&>(*this);}
+    using OV_::vector;
+    OV_& ordered_vector() {return static_cast<OV_&>(*this);}
+    const OV_& ordered_vector() const {return static_cast<OV_&>(*this);}
 
     using OV_::front;
     using OV_::back;
@@ -225,16 +225,16 @@ struct IntegralCIs_OV : private yuki::Ordered_Vector<CInterval<I>,yuki::Less<CIn
     }
 
     yuki::IB_Pair<const_iterator> insert(const I n){
-        const typename Vec_Base::iterator b = Vec_Base::begin();
+        const typename vector_type::iterator b = vector_type::begin();
         using yuki::const_kast;
-        const typename Vec_Base::iterator fg = const_kast(first_greater({n,n}));
+        const typename vector_type::iterator fg = const_kast(first_greater({n,n}));
 
         if(fg==b){
             if(b!=end() && b->lb==n+1){ // `n+1` will not overflow, since `fg->lb > n` by definition of `fg`.
                 --b->lb;
                 return {b,true};
             }else
-                return {Vec_Base::emplace(b,n,n),true};
+                return {vector_type::emplace(b,n,n),true};
         }else{
             const auto prev = fg-1;
             if(prev->ub<n){
@@ -245,7 +245,7 @@ struct IntegralCIs_OV : private yuki::Ordered_Vector<CInterval<I>,yuki::Less<CIn
                     flag |= 1U;
                 switch(flag){
                     case 0:
-                        return {Vec_Base::emplace(fg,n,n),true};
+                        return {vector_type::emplace(fg,n,n),true};
                     case 1:
                         --fg->lb; // Will not overflow.
                         return {fg,true};
@@ -253,7 +253,7 @@ struct IntegralCIs_OV : private yuki::Ordered_Vector<CInterval<I>,yuki::Less<CIn
                         ++prev->ub; // Will not overflow.
                         return {prev,true};
                     case 3:
-                        return {Vec_Base::erase_then_emplace(prev,2,CInterval<I>{prev->lb,fg->ub}),true};
+                        return {vector_type::erase_then_emplace(prev,2,CInterval<I>{prev->lb,fg->ub}),true};
                     default: assert(false); std::unreachable();
                 }
             }
@@ -315,7 +315,7 @@ struct IntegralCIs_OV : private yuki::Ordered_Vector<CInterval<I>,yuki::Less<CIn
                 }
             }
         }
-        return {Vec_Base::erase_then_emplace(left,right-left,ci_new),true};
+        return {vector_type::erase_then_emplace(left,right-left,ci_new),true};
     } // void insert(const C32_Interval ci)
 
     friend IntegralCIs_OV operator*<I,A,EC>(const IntegralCIs_OV&,const IntegralCIs_OV&);
@@ -334,7 +334,7 @@ struct IntegralCIs_OV : private yuki::Ordered_Vector<CInterval<I>,yuki::Less<CIn
 // A*(B0+...+Bm) = (A*B0)+...+(A*Bm)
 template<typename I,typename A,typename EC>
 IntegralCIs_OV<I,A,EC> operator*(const IntegralCIs_OV<I,A,EC>&lhs_p,const IntegralCIs_OV<I,A,EC>&rhs_p){
-    typedef typename IntegralCIs_OV<I,A,EC>::Vec_Base::iterator iterator;
+    typedef typename IntegralCIs_OV<I,A,EC>::vector_type::iterator iterator;
     typedef typename IntegralCIs_OV<I,A,EC>::const_iterator const_iterator;
 
     const IntegralCIs_OV<I,A,EC>* lhs = &lhs_p;
@@ -348,7 +348,7 @@ IntegralCIs_OV<I,A,EC> operator*(const IntegralCIs_OV<I,A,EC>&lhs_p,const Integr
     auto append_back = [](IntegralCIs_OV<I,A,EC>& cc_p,const const_iterator l,const const_iterator r) -> iterator {
         const typename IntegralCIs_OV<I,A,EC>::size_type s = r-l;
         assert(cc_p.capacity()>=cc_p.size()+s);
-        const iterator e = cc_p.Vec_Base::end();
+        const iterator e = cc_p.vector_type::end();
         yuki::uninitialized_copy_no_overlap(e,l,s);
         cc_p.force_resize(cc_p.size()+s);
         return e;
@@ -379,11 +379,11 @@ IntegralCIs_OV<I,A,EC> operator*(const IntegralCIs_OV<I,A,EC>&lhs_p,const Integr
             if(right!=e){ // 1
                 if(left==right){
                     assert(cc.size()!=cc.capacity());
-                    cc.Vec_Base::emplace_back(ci);
+                    cc.vector_type::emplace_back(ci);
                 }else{ // Same as the previous branch, actually.
                     ++right;
                     append_back(cc,left,right)->lb = ci.lb;
-                    cc.Vec_Base::back().ub = ci.ub;
+                    cc.vector_type::back().ub = ci.ub;
                 }
             }else{ // 2
                 right = right_fg;
@@ -393,7 +393,7 @@ IntegralCIs_OV<I,A,EC> operator*(const IntegralCIs_OV<I,A,EC>&lhs_p,const Integr
             if(right!=e){ // 3 (2 with left and right reversed)
                 left=left_fg, ++right;
                 append_back(cc,left,right);
-                cc.Vec_Base::back().ub = ci.ub;
+                cc.vector_type::back().ub = ci.ub;
             }else{ // 4
                 left=left_fg, right=right_fg;
                 if(left!=right){ // Same without this `if`, actually. `append_back` will do nothing if `left==right`.
@@ -438,15 +438,15 @@ IntegralCIs_OV<I,A,EC> operator+(const IntegralCIs_OV<I,A,EC>& lhs,const Integra
         }
 
         if(!cc.empty()){
-            CInterval<I>& cib = cc.Vec_Base::back();
+            CInterval<I>& cib = cc.vector_type::back();
             if(ci.ub>cib.ub){
                 if(ci.lb<=cib.ub+1) // Obviously this will not overflow.
                     cib.ub=ci.ub;
                 else
-                    cc.Vec_Base::emplace_back(ci);
+                    cc.vector_type::emplace_back(ci);
             }
         }else
-            cc.Vec_Base::emplace_back(ci);
+            cc.vector_type::emplace_back(ci);
     }
 } // operator+
 
@@ -481,31 +481,31 @@ IntegralCIs_OV<I,A,EC> operator-(const IntegralCIs_OV<I,A,EC>& lhs,const Integra
             if(right!=e){ // 1
                 assert(cc.capacity()>=cc.size()+(right-left));
                 for(const_iterator i=left+1; left!=right; ++left,++i)
-                    cc.Vec_Base::emplace_back(CInterval<I>{left->ub+1,i->lb-1}); // By definition we have `i->lb > left->ub` so both expressions will not overflow. Since all insertion methods merge adjacent intervals whenever possible, this interval can never be empty.
+                    cc.vector_type::emplace_back(CInterval<I>{left->ub+1,i->lb-1}); // By definition we have `i->lb > left->ub` so both expressions will not overflow. Since all insertion methods merge adjacent intervals whenever possible, this interval can never be empty.
             }else{ // 2
                 right = right_fg;
                 assert(cc.capacity()>=cc.size()+(right-left));
                 for(const_iterator i=left+1; left!=right; ++left,++i)
-                    cc.Vec_Base::emplace_back(CInterval<I>{left->ub+1,i->lb-1}); // Will not overflow as in case 1.
-                cc.Vec_Base::back().ub = ci.ub;
+                    cc.vector_type::emplace_back(CInterval<I>{left->ub+1,i->lb-1}); // Will not overflow as in case 1.
+                cc.vector_type::back().ub = ci.ub;
             }
         }else{
             if(right!=e){ // 3 (2 with left and right reversed)
                 left=left_fg;
                 assert(cc.capacity()>=cc.size()+(right-left+1));
-                cc.Vec_Base::emplace_back(CInterval<I>{ci.lb,left->lb-1}); // It's trivial to see that `left->lb-1` will not overflow since `ci.lb < left(_fg)->lb` by definition. What's not so obvious is that `left(_fg)` can be safely dereferenced. Because all insertion methods of `IntegralCIs_OV` do not accept an empty interval, we have `left_fg<=right_fg`. So it suffices to show that `left_fg==right_fg` implies `right_fg!=e`. Now suppose otherwise that `left_fg==right_fg==e`. There could be several possiblities but it's impossible to make `left==e && right!=e` in this case, given that `ci` is not an empty interval.
+                cc.vector_type::emplace_back(CInterval<I>{ci.lb,left->lb-1}); // It's trivial to see that `left->lb-1` will not overflow since `ci.lb < left(_fg)->lb` by definition. What's not so obvious is that `left(_fg)` can be safely dereferenced. Because all insertion methods of `IntegralCIs_OV` do not accept an empty interval, we have `left_fg<=right_fg`. So it suffices to show that `left_fg==right_fg` implies `right_fg!=e`. Now suppose otherwise that `left_fg==right_fg==e`. There could be several possiblities but it's impossible to make `left==e && right!=e` in this case, given that `ci` is not an empty interval.
                 for(const_iterator i=left+1; left!=right; ++left,++i)
-                    cc.Vec_Base::emplace_back(CInterval<I>{left->ub+1,i->lb-1}); // Will not overflow as in case 1.
+                    cc.vector_type::emplace_back(CInterval<I>{left->ub+1,i->lb-1}); // Will not overflow as in case 1.
             }else{ // 4
                 left=left_fg, right=right_fg;
                 assert(cc.capacity()>=cc.size()+(right-left+1));
                 if(left!=right){
-                    cc.Vec_Base::emplace_back(CInterval<I>{ci.lb,left->lb-1});
+                    cc.vector_type::emplace_back(CInterval<I>{ci.lb,left->lb-1});
                     for(const_iterator i=left+1; left!=right; ++left,++i)
-                        cc.Vec_Base::emplace_back(CInterval<I>{left->ub+1,i->lb-1}); // Will not overflow as in case 1.
-                    cc.Vec_Base::back().ub = ci.ub;
+                        cc.vector_type::emplace_back(CInterval<I>{left->ub+1,i->lb-1}); // Will not overflow as in case 1.
+                    cc.vector_type::back().ub = ci.ub;
                 }else
-                    cc.Vec_Base::emplace_back(ci);
+                    cc.vector_type::emplace_back(ci);
             }
         }
     } // for(const CInterval<I> ci : lhs)
@@ -528,14 +528,14 @@ IntegralCIs_OV<I,A,EC> negate(const IntegralCIs_OV<I,A,EC>& iciov){
 
     assert(i1->lb >= universe.lb);
     if(i1->lb > universe.lb)
-        cc.Vec_Base::emplace_back(CInterval<I>{0,(i1->lb)-1}); // Obviously this will not overflow.
+        cc.vector_type::emplace_back(CInterval<I>{0,(i1->lb)-1}); // Obviously this will not overflow.
 
     for(const_iterator i2=i1+1; i2!=e; ++i1,++i2)
-        cc.Vec_Base::emplace_back(CInterval<I>{i1->ub+1,i2->lb-1}); // Obviously this will not overflow.
+        cc.vector_type::emplace_back(CInterval<I>{i1->ub+1,i2->lb-1}); // Obviously this will not overflow.
 
     assert(i1->ub <= universe.ub);
     if(i1->ub < universe.ub)
-        cc.Vec_Base::emplace_back(CInterval<I>{(i1->ub)+1,universe.ub}); // Obviously this will not overflow.
+        cc.vector_type::emplace_back(CInterval<I>{(i1->ub)+1,universe.ub}); // Obviously this will not overflow.
     return cc;
 }
 
@@ -580,15 +580,15 @@ void IntegralCIs_OV<I,A,EC>::clear_and_merge(It it,const size_t count,IsUniverse
         ++*i_min;
 
         if(!empty()){
-            CInterval<I>& cib = Vec_Base::back();
+            CInterval<I>& cib = vector_type::back();
             if(ci.ub>cib.ub){
                 if(ci.lb<=cib.ub+1) // Obviously this will not overflow.
                     cib.ub=ci.ub;
                 else
-                    Vec_Base::emplace_back(ci);
+                    vector_type::emplace_back(ci);
             }
         }else
-            Vec_Base::emplace_back(ci);
+            vector_type::emplace_back(ci);
     }
 } // void IntegralCIs_OV<I,A,EC>::clear_and_merge(It it,const size_t count)
 } // namespace yuki

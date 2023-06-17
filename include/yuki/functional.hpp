@@ -1,5 +1,6 @@
 #pragma once
 #include<compare>
+#include<type_traits>
 
 namespace yuki{
 
@@ -14,55 +15,48 @@ struct Transparent : private F{
 inline constexpr std::compare_three_way compare3;
 
 
-template<typename T=void>
+template<typename T>
 struct Less{
     static constexpr bool operator()(const T& lhs,const T& rhs) {return lhs<rhs;}
 };
 
-template<>
-struct Less<void>{
-    template<typename T,typename U>
-    static constexpr decltype(auto) operator()(const T& lhs,const U& rhs) {return lhs<rhs;}
-    template<typename T,typename U>
-    static constexpr bool operator()(T* const lhs,U* const rhs) {return compare3(lhs,rhs)<0;}
+template<typename T> requires (std::is_arithmetic_v<T> || std::is_enum_v<T>)
+struct Less<T>{
+    static constexpr bool operator()(const T lhs,const T rhs) {return lhs<rhs;}
     typedef void is_transparent;
 };
 
 template<typename T>
 struct Less<T*>{
     static constexpr bool operator()(T* const lhs,T* const rhs) {return compare3(lhs,rhs)<0;}
+    typedef void is_transparent;
 };
 
-
-template<typename T=void>
+template<typename T>
 struct Greater{
     static constexpr bool operator()(const T& lhs,const T& rhs) {return lhs>rhs;}
 };
 
-template<>
-struct Greater<void>{
-    template<typename T,typename U>
-    static constexpr decltype(auto) operator()(const T& lhs,const U& rhs) {return lhs>rhs;}
-    template<typename T,typename U>
-    static constexpr bool operator()(T* const lhs,U* const rhs) {return compare3(lhs,rhs)>0;}
+template<typename T> requires (std::is_arithmetic_v<T> || std::is_enum_v<T>)
+struct Greater<T>{
+    static constexpr bool operator()(const T lhs,const T rhs) {return lhs>rhs;}
     typedef void is_transparent;
 };
 
 template<typename T>
 struct Greater<T*>{
     static constexpr bool operator()(T* const lhs,T* const rhs) {return compare3(lhs,rhs)>0;}
+    typedef void is_transparent;
 };
 
-
-template<typename T=void>
+template<typename T>
 struct Equal_To{
     static constexpr bool operator()(const T& lhs,const T& rhs) {return lhs==rhs;}
 };
 
-template<>
-struct Equal_To<void>{
-    template<typename T,typename U>
-    static constexpr decltype(auto) operator()(const T& lhs,const U& rhs) {return lhs==rhs;}
+template<typename T> requires std::is_scalar_v<T>
+struct Equal_To<T>{
+    static constexpr bool operator()(const T lhs,const T rhs) {return lhs==rhs;}
     typedef void is_transparent;
 };
 
@@ -70,7 +64,6 @@ struct Equal_To<void>{
 struct Iden{
     template<typename V>
     static constexpr V&& operator()(V&& v) {return static_cast<V&&>(v);}
-    typedef void is_transparent;
 };
 
 

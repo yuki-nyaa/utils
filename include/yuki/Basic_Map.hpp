@@ -9,11 +9,12 @@ struct KM_Pair{
     static_assert(std::is_const_v<K>);
     K key;
     M mapped;
+};
 
-    struct Key{
-        static constexpr K& operator()(KM_Pair<K,M>& p) {return p.key;}
-        static constexpr const K& operator()(const KM_Pair<K,M>& p) {return p.key;}
-    };
+struct Get_Key{
+    template<typename K,typename M>
+    static constexpr const K& operator()(const KM_Pair<K,M>& p) {return p.key;}
+    typedef void is_transparent;
 };
 
 template<
@@ -23,56 +24,59 @@ template<
     typename C,
     typename A,
     typename... Others>
-struct Basic_Map : protected B<K,KM_Pair<const K,M>,typename KM_Pair<const K,M>::Key,C,A,Others...>{
-    typedef B<K,KM_Pair<const K,M>,typename KM_Pair<const K,M>::Key,C,A,Others...> Tree_Base;
+struct Basic_Map : protected B<K,KM_Pair<const K,M>,Get_Key,C,A,Others...>{
+    typedef B<K,KM_Pair<const K,M>,Get_Key,C,A,Others...> tree_type;
 
-    using typename Tree_Base::key_type;
+    using typename tree_type::key_type;
     typedef M mapped_type;
-    using typename Tree_Base::value_type;
-    using typename Tree_Base::key_compare;
-    using typename Tree_Base::allocator_type;
-    using typename Tree_Base::pointer;
-    using typename Tree_Base::const_pointer;
-    using typename Tree_Base::size_type;
-    using typename Tree_Base::difference_type;
+    using typename tree_type::value_type;
+    using typename tree_type::key_compare;
+    using typename tree_type::allocator_type;
+    using typename tree_type::pointer;
+    using typename tree_type::const_pointer;
+    using typename tree_type::size_type;
+    using typename tree_type::difference_type;
 
     constexpr Basic_Map() noexcept = default;
 
-    template<typename... Args,typename=std::enable_if_t<std::is_constructible_v<Tree_Base,yuki::unique_tag_t,Args&&...>>>
+    template<typename... Args,typename=std::enable_if_t<std::is_constructible_v<tree_type,yuki::unique_tag_t,Args&&...>>>
     constexpr Basic_Map(Args&&... args) noexcept :
-        Tree_Base(yuki::unique_tag,std::forward<Args>(args)...)
+        tree_type(yuki::unique_tag,std::forward<Args>(args)...)
     {}
 
-    Basic_Map(yuki::from_ordered_tag_t,const Tree_Base& tree) noexcept : Tree_Base(tree) {}
-    constexpr Basic_Map(yuki::from_ordered_tag_t,Tree_Base&& tree) noexcept : Tree_Base(std::move(tree)) {}
+    template<typename... Args> requires std::is_constructible_v<tree_type,Args&&...>
+    constexpr Basic_Map(yuki::from_ordered_tag_t,Args&&... args) noexcept : tree_type(std::forward<Args>(args)...) {}
 
-    Basic_Map& assign(yuki::from_ordered_tag_t,const Tree_Base& tree) noexcept {Tree_Base::operator=(tree); return *this;}
-    Basic_Map& assign(yuki::from_ordered_tag_t,Tree_Base&& tree) noexcept {Tree_Base::operator=(std::move(tree)); return *this;}
+    template<typename... Args> requires (!std::is_constructible_v<tree_type,Args&&...> && std::is_constructible_v<tree_type,yuki::from_ordered_tag_t,Args&&...>)
+    constexpr Basic_Map(yuki::from_ordered_tag_t,Args&&... args) noexcept : tree_type(yuki::from_ordered_tag,std::forward<Args>(args)...) {}
 
-    friend constexpr void swap(Basic_Map& lhs,Basic_Map& rhs) noexcept {swap(static_cast<Tree_Base&>(lhs),static_cast<Tree_Base&>(rhs));}
+    Basic_Map& assign(yuki::from_ordered_tag_t,const tree_type& tree) noexcept {tree_type::operator=(tree); return *this;}
+    Basic_Map& assign(yuki::from_ordered_tag_t,tree_type&& tree) noexcept {tree_type::operator=(std::move(tree)); return *this;}
 
-    constexpr Tree_Base& tree_base() {return *this;}
-    constexpr const Tree_Base& tree_base() const {return *this;}
+    friend constexpr void swap(Basic_Map& lhs,Basic_Map& rhs) noexcept {swap(static_cast<tree_type&>(lhs),static_cast<tree_type&>(rhs));}
 
-    using Tree_Base::clear;
-    using Tree_Base::empty;
-    using Tree_Base::size;
+    constexpr tree_type& tree() {return *this;}
+    constexpr const tree_type& tree() const {return *this;}
 
-    typedef typename Tree_Base::non_const_iterator iterator;
-    using typename Tree_Base::const_iterator;
+    using tree_type::clear;
+    using tree_type::empty;
+    using tree_type::size;
 
-    iterator begin() {using yuki::const_kast; return const_kast(Tree_Base::begin());}
-    const_iterator begin() const {return Tree_Base::begin();}
-    constexpr iterator end() {using yuki::const_kast; return const_kast(Tree_Base::end());}
-    constexpr const_iterator end() const {return Tree_Base::end();}
+    typedef typename tree_type::non_const_iterator iterator;
+    using typename tree_type::const_iterator;
 
-    iterator min() {using yuki::const_kast; return const_kast(Tree_Base::min());}
-    const_iterator min() const {return Tree_Base::min();}
-    iterator max() {using yuki::const_kast; return const_kast(Tree_Base::max());}
-    const_iterator max() const {return Tree_Base::max();}
+    iterator begin() {using yuki::const_kast; return const_kast(tree_type::begin());}
+    const_iterator begin() const {return tree_type::begin();}
+    constexpr iterator end() {using yuki::const_kast; return const_kast(tree_type::end());}
+    constexpr const_iterator end() const {return tree_type::end();}
 
-    using Tree_Base::first_greater_tp;
-    using Tree_Base::first_greater;
+    iterator min() {using yuki::const_kast; return const_kast(tree_type::min());}
+    const_iterator min() const {return tree_type::min();}
+    iterator max() {using yuki::const_kast; return const_kast(tree_type::max());}
+    const_iterator max() const {return tree_type::max();}
+
+    using tree_type::first_greater_tp;
+    using tree_type::first_greater;
 
     template<typename K2>
     iterator first_greater_tp(const K2& k) {using yuki::const_kast; return const_kast(first_greater_tp(k));}
@@ -81,8 +85,8 @@ struct Basic_Map : protected B<K,KM_Pair<const K,M>,typename KM_Pair<const K,M>:
     iterator first_greater(const K2& k) requires requires{typename C::is_transparent;}
         {using yuki::const_kast; return const_kast(first_greater_tp(k));}
 
-    using Tree_Base::first_equiv_greater_tp;
-    using Tree_Base::first_equiv_greater;
+    using tree_type::first_equiv_greater_tp;
+    using tree_type::first_equiv_greater;
 
     template<typename K2>
     iterator first_equiv_greater_tp(const K2& k) {using yuki::const_kast; return const_kast(first_equiv_greater_tp(k));}
@@ -92,21 +96,21 @@ struct Basic_Map : protected B<K,KM_Pair<const K,M>,typename KM_Pair<const K,M>:
         {using yuki::const_kast; return const_kast(first_equiv_greater_tp(k));}
 
     template<typename K2>
-    iterator find_tp(const K2& k) {using yuki::const_kast; return const_kast(Tree_Base::find_any_tp(k));}
-    iterator find(const K& k) {using yuki::const_kast; return const_kast(Tree_Base::find_any_tp(k));;}
+    iterator find_tp(const K2& k) {using yuki::const_kast; return const_kast(tree_type::find_any_tp(k));}
+    iterator find(const K& k) {using yuki::const_kast; return const_kast(tree_type::find_any_tp(k));;}
     template<typename K2>
     iterator find(const K2& k) requires requires{typename C::is_transparent;}
-        {using yuki::const_kast; return const_kast(Tree_Base::find_any_tp(k));}
+        {using yuki::const_kast; return const_kast(tree_type::find_any_tp(k));}
 
     template<typename K2>
-    const_iterator find_tp(const K2& k) const {return Tree_Base::find_any_tp(k);}
-    const_iterator find(const K& k) const {return Tree_Base::find_any_tp(k);}
+    const_iterator find_tp(const K2& k) const {return tree_type::find_any_tp(k);}
+    const_iterator find(const K& k) const {return tree_type::find_any_tp(k);}
     template<typename K2>
     const_iterator find(const K2& k) const requires requires{typename C::is_transparent;}
-        {return Tree_Base::find_any_tp(k);}
+        {return tree_type::find_any_tp(k);}
 
-    using Tree_Base::contains_tp;
-    using Tree_Base::contains;
+    using tree_type::contains_tp;
+    using tree_type::contains;
 
     template<typename K2>
     M& at_tp(const K2& k) noexcept(false) {
@@ -142,7 +146,7 @@ struct Basic_Map : protected B<K,KM_Pair<const K,M>,typename KM_Pair<const K,M>:
 
     template<typename K2,typename... Args>
     yuki::IB_Pair<iterator> emplace_tp(K2&& k,Args&&... args){
-        const yuki::IB_Pair<const_iterator> ibp = Tree_Base::emplace_unique_at_tp(k,std::forward<K2>(k),std::forward<Args>(args)...);
+        const yuki::IB_Pair<const_iterator> ibp = tree_type::emplace_unique_at_tp(k,std::forward<K2>(k),std::forward<Args>(args)...);
         using yuki::const_kast;
         return {const_kast(ibp.iterator),ibp.has_inserted};
     }
@@ -175,23 +179,19 @@ struct Basic_Map : protected B<K,KM_Pair<const K,M>,typename KM_Pair<const K,M>:
     yuki::IB_Pair<iterator> insert_or_assign(K2&& k,Mp&& m) requires requires{typename C::is_transparent;}
         {return insert_or_assign_tp(std::forward<K2>(k),std::forward<Mp>(m));}
 
-    using Tree_Base::erase;
+    using tree_type::erase;
 
     template<typename K2>
-    size_type erase_tp(const K2& k) const {return Tree_Base::erase_unique_tp(k);}
-    size_type erase(const K& k) const {return Tree_Base::erase_unique_tp(k);}
+    size_type erase_tp(const K2& k) const {return tree_type::erase_unique_tp(k);}
+    size_type erase(const K& k) const {return tree_type::erase_unique_tp(k);}
     template<typename K2>
     size_type erase(const K2& k) const requires requires{typename C::is_transparent;}
-        {return Tree_Base::erase_unique_tp(k);}
+        {return tree_type::erase_unique_tp(k);}
 
-    template<typename C2,typename A2,typename... Others2>
-    void merge(const Basic_Map<B,K,M,C2,A2,Others2...>& other) {Tree_Base::merge_unique(other);}
-    template<typename C2,typename A2,typename... Others2,typename... Mg>
-    void merge(const Basic_Map<B,K,M,C2,A2,Others2...>& other,Mg&&... mg) {Tree_Base::merge_unique(other,std::forward<Mg>(mg)...);}
-    template<typename C2,typename A2,typename... Others2>
-    void merge(Basic_Map<B,K,M,C2,A2,Others2...>&& other) {Tree_Base::merge_unique(std::move(other));}
-    template<typename C2,typename A2,typename... Others2,typename... Mg>
-    void merge(Basic_Map<B,K,M,C2,A2,Others2...>&& other,Mg&&... mg) {Tree_Base::merge_unique(std::move(other),std::forward<Mg>(mg)...);}
+    template<typename K2,typename M2,typename C2,typename A2,typename... Others2,typename... Mg>
+    void merge(const Basic_Map<B,K2,M2,C2,A2,Others2...>& other,Mg&&... mg) {tree_type::merge_unique(other,std::forward<Mg>(mg)...);}
+    template<typename K2,typename M2,typename C2,typename A2,typename... Others2,typename... Mg>
+    void merge(Basic_Map<B,K,M,C2,A2,Others2...>&& other,Mg&&... mg) {tree_type::merge_unique(std::move(other),std::forward<Mg>(mg)...);}
 }; // Basic_Map<B,K,M,C,A,Others...>
 
 template<
@@ -201,5 +201,5 @@ template<
     typename C,
     typename A,
     typename... Others>
-using Basic_MultiMap = B<K,KM_Pair<const K,M>,typename KM_Pair<const K,M>::Key,C,A,Others...>;
+using Basic_MultiMap = B<K,KM_Pair<const K,M>,Get_Key,C,A,Others...>;
 } // namespace yuki
