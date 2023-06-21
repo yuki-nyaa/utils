@@ -191,7 +191,7 @@ struct Basic_Map : protected B<K,KM_Pair<const K,M>,Get_Key,C,A,Others...>{
     template<typename K2,typename M2,typename C2,typename A2,typename... Others2,typename... Mg>
     void merge(const Basic_Map<B,K2,M2,C2,A2,Others2...>& other,Mg&&... mg) {tree_type::merge_unique(other,std::forward<Mg>(mg)...);}
     template<typename K2,typename M2,typename C2,typename A2,typename... Others2,typename... Mg>
-    void merge(Basic_Map<B,K,M,C2,A2,Others2...>&& other,Mg&&... mg) {tree_type::merge_unique(std::move(other),std::forward<Mg>(mg)...);}
+    void merge(Basic_Map<B,K2,M2,C2,A2,Others2...>&& other,Mg&&... mg) {tree_type::merge_unique(std::move(other),std::forward<Mg>(mg)...);}
 }; // Basic_Map<B,K,M,C,A,Others...>
 
 template<

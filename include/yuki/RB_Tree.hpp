@@ -237,53 +237,34 @@ struct RB_Tree : protected KV,protected C,protected A{
     constexpr size_type size() const {return s_;}
 
     const_iterator begin() const {return min();}
-    /// @note The end-iterator is not decrementable. If you want to do back-traversal you should use `max()`.
+    /// @note The end-iterator is not decrementable. If you want to do back-traversal you should use `max()` or `recursive_backtraverse`.
     constexpr const_iterator end() const {return nullptr;}
 
     /// @note `f` should not change the keys.
     template<typename F>
-    void recursive_traverse(F&& f){recursive_traverse_at(root_,std::forward<F>(f));}
+    void recursive_traverse(F&& f) {recursive_traverse_at(root_,std::forward<F>(f));}
     template<typename F>
     void recursive_traverse(F&& f) const {recursive_traverse_at(root_,std::forward<F>(f));}
     template<typename F>
-    void recursive_backtraverse(F&& f){recursive_backtraverse_at(root_,std::forward<F>(f));}
+    void recursive_backtraverse(F&& f) {recursive_backtraverse_at(root_,std::forward<F>(f));}
     template<typename F>
     void recursive_backtraverse(F&& f) const {recursive_backtraverse_at(root_,std::forward<F>(f));}
-  private:
-    /// @note `f` should not change the keys.
+
     template<typename F>
-    void recursive_traverse_at(const pointer p,F&& f){
-        if(p){
-            recursive_traverse_at(p->left,std::forward<F>(f));
-            std::forward<F>(f)(p->value);
-            recursive_traverse_at(p->right,std::forward<F>(f));
-        }
+    void recursive_popfront(F&& f){
+        recursive_popfront_at(root_,std::forward<F>(f));
+        yuki::clear_alloc<A>(*this);
+        root_=nullptr;
+        s_=0;
     }
     template<typename F>
-    void recursive_traverse_at(const const_pointer p,F&& f) const {
-        if(p){
-            recursive_traverse_at(p->left,std::forward<F>(f));
-            std::forward<F>(f)(p->value);
-            recursive_traverse_at(p->right,std::forward<F>(f));
-        }
+    void recursive_popback(F&& f){
+        recursive_popback_at(root_,std::forward<F>(f));
+        yuki::clear_alloc<A>(*this);
+        root_=nullptr;
+        s_=0;
     }
-    template<typename F>
-    void recursive_backtraverse_at(const pointer p,F&& f){
-        if(p){
-            recursive_backtraverse_at(p->right,std::forward<F>(f));
-            std::forward<F>(f)(p->value);
-            recursive_backtraverse_at(p->left,std::forward<F>(f));
-        }
-    }
-    template<typename F>
-    void recursive_backtraverse_at(const const_pointer p,F&& f) const {
-        if(p){
-            recursive_backtraverse_at(p->right,std::forward<F>(f));
-            std::forward<F>(f)(p->value);
-            recursive_backtraverse_at(p->left,std::forward<F>(f));
-        }
-    }
-  public:
+
     constexpr const_iterator root() const {return root_;}
 
     const_iterator min() const {return root_? tree_op::min(root_) : nullptr;}
@@ -869,6 +850,63 @@ struct RB_Tree : protected KV,protected C,protected A{
                 other->~node_type();
                 a_other.deallocate(other);
             }
+        }
+    }
+
+    /// @note `f` should not change the keys.
+    template<typename F>
+    void recursive_traverse_at(const pointer p,F&& f){
+        if(p){
+            recursive_traverse_at(p->left,std::forward<F>(f));
+            std::forward<F>(f)(p->value);
+            recursive_traverse_at(p->right,std::forward<F>(f));
+        }
+    }
+    template<typename F>
+    void recursive_traverse_at(const const_pointer p,F&& f) const {
+        if(p){
+            recursive_traverse_at(p->left,std::forward<F>(f));
+            std::forward<F>(f)(p->value);
+            recursive_traverse_at(p->right,std::forward<F>(f));
+        }
+    }
+    template<typename F>
+    void recursive_backtraverse_at(const pointer p,F&& f){
+        if(p){
+            recursive_backtraverse_at(p->right,std::forward<F>(f));
+            std::forward<F>(f)(p->value);
+            recursive_backtraverse_at(p->left,std::forward<F>(f));
+        }
+    }
+    template<typename F>
+    void recursive_backtraverse_at(const const_pointer p,F&& f) const {
+        if(p){
+            recursive_backtraverse_at(p->right,std::forward<F>(f));
+            std::forward<F>(f)(p->value);
+            recursive_backtraverse_at(p->left,std::forward<F>(f));
+        }
+    }
+
+    template<typename F>
+    void recursive_popfront_at(const pointer p,F&& f){
+        if(p){
+            recursive_popfront_at(p->left,std::forward<F>(f));
+            std::forward<F>(f)(std::move(p->value));
+            const pointer right = p->right;
+            p->~node_type();
+            A::deallocate(p);
+            recursive_popfront_at(right,std::forward<F>(f));
+        }
+    }
+    template<typename F>
+    void recursive_popback_at(const pointer p,F&& f){
+        if(p){
+            recursive_popback_at(p->right,std::forward<F>(f));
+            std::forward<F>(f)(std::move(p->value));
+            const pointer left = p->left;
+            p->~node_type();
+            A::deallocate(p);
+            recursive_popback_at(left,std::forward<F>(f));
         }
     }
 
