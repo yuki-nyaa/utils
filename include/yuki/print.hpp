@@ -12,7 +12,9 @@ struct simple_formatter{ // Used only with empty format string.
 };
 
 template<typename T>
-void print_line(const T& message,FILE* const fp=stdout) {fmt::print(fp,"{}\n",message);}
+void print_line(const T& message) {fmt::print("{}\n",message);}
+template<typename T>
+void print_line(FILE* const fp,const T& message) {fmt::print(fp,"{}\n",message);}
 
 template<char sep = ' ',typename... Ts>
 void print_space(FILE* const fp,const Ts&... messages) {(...,(fmt::print(fp,"{}{}",messages,sep))); fputc(static_cast<unsigned char>('\n'),fp);}
@@ -23,12 +25,8 @@ void try_print(FILE* const fp,const std::string_view format,const Args&... args)
         fmt::vprint(fp,format,fmt::make_format_args(args...));
 }
 
-inline int try_fprintf(FILE* const fp,const char* const format){
-    if(fp)
-        return fprintf(fp,format);
-    else
-        return 0;
-}
+template<typename... Args>
+int try_fprintf(FILE* const fp,const char* const fmt,const Args... args) {return fp ? fprintf(fp,fmt,args...) : 0;}
 
 // The standard does not say what would happen with `fclose(NULL/nullptr)`. It even does not say it's undefined.
 inline int try_fclose(FILE* const fp){

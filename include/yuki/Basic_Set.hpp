@@ -71,6 +71,22 @@ struct Basic_GSet : protected B<K,V,KV,C,A,Others...>{
     using tree_type::contains_tp;
     using tree_type::contains;
 
+    template<typename K2>
+    const V& at_tp(const K2& k) const noexcept(false) {
+        if(const const_iterator i=find_tp(k); i!=end())
+            return *i;
+        else
+            throw std::out_of_range("yuki::Basic_GSet::at(_tp) const: Out of range!");
+    }
+    const V& at(const K& k) const noexcept(false) {return at_tp(k);}
+    template<typename K2>
+    const V& at(const K2& k) const noexcept(false) requires requires{typename C::is_transparent;} {return at_tp(k);}
+
+    /// @note Unlike `std::map::operator[]`, this implementation does not insert new value when an equivalent key is not found, to match vector's behaviour, which is more natural IMO.
+    const V& operator[](const K& k) const {return *find(k);}
+    template<typename K2>
+    const V& operator[](const K2& k) const requires requires{typename C::is_transparent;} {return *find(k);}
+
     /// @pre `KV::operator()(V(std::forward<Args>(args)...))` should be equivalent to `k`.
     template<typename K2,typename... Args>
     yuki::IB_Pair<const_iterator> emplace_at_tp(const K2& k,Args&&... args){

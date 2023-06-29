@@ -137,12 +137,10 @@ struct Basic_Map : protected B<K,KM_Pair<const K,M>,Get_Key,C,A,Others...>{
     /// @note Unlike `std::map::operator[]`, this implementation does not insert new value when an equivalent key is not found, to match vector's behaviour, which is more natural IMO. `insert_or_assign` should be used instead when an insertion is desirable.
     M& operator[](const K& k) {return find(k)->mapped;}
     template<typename K2>
-    M& operator[](const K2& k) requires requires{typename C::is_transparent;}
-        {return find(k)->mapped;}
+    M& operator[](const K2& k) requires requires{typename C::is_transparent;} {return find(k)->mapped;}
     const M& operator[](const K& k) const {return find(k)->mapped;}
     template<typename K2>
-    const M& operator[](const K2& k) const requires requires{typename C::is_transparent;}
-        {return find(k)->mapped;}
+    const M& operator[](const K2& k) const requires requires{typename C::is_transparent;} {return find(k)->mapped;}
 
     template<typename K2,typename... Args>
     yuki::IB_Pair<iterator> emplace_tp(K2&& k,Args&&... args){
