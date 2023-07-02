@@ -358,18 +358,14 @@ struct RB_Tree : protected KV,protected C,protected A{
         return z;
     }
 
-    /// @pre `KV::operator()(V(std::forward<Args>(args)...))` should be equivalent to first parameter.
     template<typename K2,typename... Args>
     const_iterator emplace_at_tp(const K2&,Args&&... args) {return emplace(std::forward<Args>(args)...);}
-    /// @pre `KV::operator()(V(std::forward<Args>(args)...))` should be equivalent to first parameter.
     template<typename... Args>
     const_iterator emplace_at(const K&,Args&&... args) {return emplace(std::forward<Args>(args)...);}
-    /// @pre `KV::operator()(V(std::forward<Args>(args)...))` should be equivalent to first parameter.
     template<typename K2,typename... Args>
     const_iterator emplace_at(const K2&,Args&&... args) requires requires{typename C::is_transparent;}
         {return emplace(std::forward<Args>(args)...);}
 
-    /// @pre `KV::operator()(V(std::forward<Args>(args)...))` should be equivalent to `k`.
     template<typename K2,typename... Args>
     yuki::IB_Pair<const_iterator> emplace_unique_at_tp(const K2& k,Args&&... args){
         const yuki::IB_Pair<pointer> ibp = insert_leaf_unique(k);
@@ -377,18 +373,25 @@ struct RB_Tree : protected KV,protected C,protected A{
             const pointer z = A::allocate();
             using yuki::iterator_unwrap;
             ::new(iterator_unwrap(z)) node_type(rb_tree_node_variadic_tag_,std::forward<Args>(args)...);
-            insert_at(z,ibp.iterator);
+            z->parent = ibp.iterator;
+            if(!ibp.iterator)
+                root_ = z;
+            else if(C::operator()(k,KV::operator()(ibp.iterator->value)))
+                ibp.iterator->left = z;
+            else
+                ibp.iterator->right = z;
+            insert_fixup(z);
+            ++s_;
             return {z,ibp.has_inserted};
         }else{
             return {ibp.iterator,ibp.has_inserted};
         }
     }
-    /// @pre `KV::operator()(V(std::forward<Args>(args)...))` should be equivalent to `k`.
+
     template<typename... Args>
     yuki::IB_Pair<const_iterator> emplace_unique_at(const K& k,Args&&... args){
         return emplace_unique_at_tp(k,std::forward<Args>(args)...);
     }
-    /// @pre `KV::operator()(V(std::forward<Args>(args)...))` should be equivalent to `k`.
     template<typename K2,typename... Args>
     yuki::IB_Pair<const_iterator> emplace_unique_at(const K2& k,Args&&... args) requires requires{typename C::is_transparent;}
         {return emplace_unique_at_tp(k,std::forward<Args>(args)...);}

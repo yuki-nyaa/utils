@@ -87,18 +87,15 @@ struct Basic_GSet : protected B<K,V,KV,C,A,Others...>{
     template<typename K2>
     const V& operator[](const K2& k) const requires requires{typename C::is_transparent;} {return *find(k);}
 
-    /// @pre `KV::operator()(V(std::forward<Args>(args)...))` should be equivalent to `k`.
     template<typename K2,typename... Args>
     yuki::IB_Pair<const_iterator> emplace_at_tp(const K2& k,Args&&... args){
         return tree_type::emplace_unique_at_tp(k,std::forward<Args>(args)...);
     }
 
-    /// @pre `KV::operator()(V(std::forward<Args>(args)...))` should be equivalent to `k`.
     template<typename... Args>
     yuki::IB_Pair<const_iterator> emplace_at(const K& k,Args&&... args)
         {return tree_type::emplace_unique_at_tp(k,std::forward<Args>(args)...);}
 
-    /// @pre `KV::operator()(V(std::forward<Args>(args)...))` should be equivalent to `k`.
     template<typename K2,typename... Args>
     yuki::IB_Pair<const_iterator> emplace_at(const K2& k,Args&&... args) requires requires{typename C::is_transparent;}
         {return tree_type::emplace_unique_at_tp(k,std::forward<Args>(args)...);}

@@ -368,6 +368,11 @@ inline constexpr bool is_braced_init_list_convertible_v = is_braced_init_list_co
 
 namespace yuki{
 template<typename T>
+constexpr T& as_non_const(const T& t) {return const_cast<T&>(t);}
+template<typename T>
+constexpr T&& as_non_const(const T&& t) {return const_cast<T&&>(t);}
+
+template<typename T>
 constexpr T* const_kast(const T* const p) noexcept {return const_cast<T*>(p);}
 
 template<typename T>

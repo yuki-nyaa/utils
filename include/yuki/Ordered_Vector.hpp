@@ -263,17 +263,14 @@ struct Basic_Ordered_Vector : protected Vector<V,A,EC>, protected KV, protected 
     size_type count(const K2& k) const requires requires{typename C::is_transparent;}
         {return count_tp(k);}
 
-    /// @pre `KV::operator()(V(std::forward<Args>(args)...))` should be equivalent to `k`.
     template<typename K2,typename... Args>
     const_iterator emplace_at_tp(const K2& k,Args&&... args){
         return vector_type::emplace(first_greater_tp(k),std::forward<Args>(args)...);
     }
-    /// @pre `KV::operator()(V(std::forward<Args>(args)...))` should be equivalent to `k`.
     template<typename... Args>
     const_iterator emplace_at(const K& k,Args&&... args){
         return vector_type::emplace(first_greater_tp(k),std::forward<Args>(args)...);
     }
-    /// @pre `KV::operator()(V(std::forward<Args>(args)...))` should be equivalent to `k`.
     template<typename K2,typename... Args>
     const_iterator emplace_at(const K2& k,Args&&... args) requires requires{typename C::is_transparent;} {
         return vector_type::emplace(first_greater_tp(k),std::forward<Args>(args)...);
@@ -282,7 +279,6 @@ struct Basic_Ordered_Vector : protected Vector<V,A,EC>, protected KV, protected 
     const_iterator insert(const V& v) {return emplace_at_tp(KV::opetator()(v),v);}
     const_iterator insert(V&& v) {return emplace_at_tp(KV::opetator()(v),std::move(v));}
 
-    /// @pre `KV::operator()(V(std::forward<Args>(args)...))` should be equivalent to `k`.
     template<typename K2,typename... Args>
     yuki::IB_Pair<const_iterator> emplace_unique_at_tp(const K2& k,Args&&... args){
         const_iterator fg = first_greater_tp(k);
@@ -292,12 +288,10 @@ struct Basic_Ordered_Vector : protected Vector<V,A,EC>, protected KV, protected 
             return {--fg,false};
     }
 
-    /// @pre `KV::operator()(V(std::forward<Args>(args)...))` should be equivalent to `k`.
     template<typename... Args>
     yuki::IB_Pair<const_iterator> emplace_unique_at(const K& k,Args&&... args)
         {return emplace_unique_at_tp(k,std::forward<Args>(args)...);}
 
-    /// @pre `KV::operator()(V(std::forward<Args>(args)...))` should be equivalent to `k`.
     template<typename K2,typename... Args>
     yuki::IB_Pair<const_iterator> emplace_unique_at(const K2& k,Args&&... args) requires requires{typename C::is_transparent;}
         {return emplace_unique_at_tp(k,std::forward<Args>(args)...);}
