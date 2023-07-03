@@ -295,8 +295,6 @@ constexpr void move_overlap(P dst,P src,size_t count)
 }
 
 
-
-
 template<typename P,typename T>
 void uninitialized_fill_n(P p,size_t count,const T& value)
     noexcept(std::is_nothrow_constructible_v<std::remove_reference_t<decltype(*p)>,const T&>)
