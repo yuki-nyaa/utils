@@ -177,14 +177,13 @@ constexpr void copy_no_overlap(Pd dst,Ps src,size_t count)
     static_assert(!std::is_const_v<dst_t>);
 
     if constexpr(std::is_same_v<Pd,dst_t*> && std::is_same_v<dst_t,std::remove_const_t<src_t>> && std::is_trivially_copyable_v<dst_t>){
-        if(!std::is_constant_evaluated())
+        if(!std::is_constant_evaluated()){
             memcpy(dst,src,count*sizeof(dst_t));
-        else
-            for(;count!=0;--count)
-                *dst++=*src++;
-    }else
-        for(;count!=0;--count)
-            *dst++=*src++;
+            return;
+        }
+    }
+    for(;count!=0;--count)
+        *dst++=*src++;
 }
 
 template<typename Pd,typename Ps>
@@ -214,14 +213,13 @@ constexpr void move_no_overlap(Pd dst,Ps src,size_t count)
     static_assert(!std::is_const_v<src_t>);
 
     if constexpr(std::is_same_v<Pd,dst_t*> && std::is_same_v<dst_t,src_t> && std::is_trivially_copyable_v<dst_t>){
-        if(!std::is_constant_evaluated())
+        if(!std::is_constant_evaluated()){
             memcpy(dst,src,count*sizeof(dst_t));
-        else
-            for(;count!=0;--count)
-                *dst++=std::move(*src++);
-    }else
-        for(;count!=0;--count)
-            *dst++=std::move(*src++);
+            return;
+        }
+    }
+    for(;count!=0;--count)
+        *dst++=std::move(*src++);
 }
 
 // There is no `(uninitialized_)copy_overlap`, because the source objects will be overwritten anyway. (The number of overwrite, however, depends on how much they overlap.)
@@ -267,31 +265,27 @@ constexpr void move_overlap(P dst,P src,size_t count)
     typedef std::remove_reference_t<decltype(*dst)> value_t;
     static_assert(!std::is_const_v<value_t>);
 
-    auto memmove_my = [](P dst_p,P src_p,size_t count_p)constexpr{
-        if(dst_p<src_p){ // From low to high.
-            const P src_nol = dst_p+count_p;
-            for(;count_p!=0;--count_p)
-                *dst_p++=std::move(*src_p++);
-            if constexpr(!std::is_trivially_destructible_v<value_t>)
-                destroy(src_nol,src_p-dst_p);
-        }else if(dst_p>src_p){ // From high to low.
-            const P src_nol = src_p;
-            dst_p+=count_p;
-            src_p+=count_p;
-            for(;count_p!=0;--count_p)
-                *--dst_p=std::move(*--src_p);
-            if constexpr(!std::is_trivially_destructible_v<value_t>)
-                destroy(src_nol,dst_p-src_p);
-        }
-    };
-
     if constexpr(std::is_same_v<P,value_t*> && std::is_trivially_copyable_v<value_t>){
-        if(!std::is_constant_evaluated())
+        if(!std::is_constant_evaluated()){
             memmove(dst,src,count*sizeof(value_t));
-        else
-            memmove_my(dst,src,count);
-    }else
-        memmove_my(dst,src,count);
+            return;
+        }
+    }
+    if(dst<src){ // From low to high.
+        const P src_nol = dst+count;
+        for(;count!=0;--count)
+            *dst++=std::move(*src++);
+        if constexpr(!std::is_trivially_destructible_v<value_t>)
+            destroy(src_nol,src-dst);
+    }else if(dst>src){ // From high to low.
+        const P src_nol = src;
+        dst+=count;
+        src+=count;
+        for(;count!=0;--count)
+            *--dst=std::move(*--src);
+        if constexpr(!std::is_trivially_destructible_v<value_t>)
+            destroy(src_nol,dst-src);
+    }
 }
 
 
@@ -321,13 +315,13 @@ constexpr void fill_n(P p,size_t count,const T& value)
     static_assert(std::is_assignable_v<p_value_t,const T&>);
 
     for(;count!=0;--count,++p){
-        if constexpr(std::is_same_v<P,p_value_t*> && std::is_same_v<p_value_t,T> && std::is_trivially_copyable_v<T>)
-            if(!std::is_constant_evaluated())
+        if constexpr(std::is_same_v<P,p_value_t*> && std::is_same_v<p_value_t,T> && std::is_trivially_copyable_v<T>){
+            if(!std::is_constant_evaluated()){
                 memcpy(p,std::addressof(value),sizeof(T));
-            else
-               *p=value;
-        else
-            *p=value;
+                continue;
+            }
+        }
+        *p=value;
     }
 }
 
