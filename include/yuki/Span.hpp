@@ -57,16 +57,19 @@ struct Span{
 
     constexpr decltype(auto) operator[](const size_type i) const {assert(i<size()); return begin_[i];}
     constexpr decltype(auto) front() const {assert(!empty()); return *begin_;}
-    constexpr decltype(auto) back() const {assert(!empty()); It it=end_;return *(--it);}
+    constexpr decltype(auto) back() const {assert(!empty()); It it=end_;return *--it;}
 
     constexpr void remove_prefix() {assert(!empty()); ++begin_;}
     constexpr void remove_suffix() {assert(!empty()); --end_;}
     constexpr void remove_prefix(const size_type n) {assert(n<=size()); begin_+=n;}
     constexpr void remove_suffix(const size_type n) {assert(n<=size()); end_-=n;}
 
-    constexpr Span subspan(const size_type off,const size_type n) const {assert(off<=n && off+n<=size()); return {begin_+off,begin_+off+n};}
+    constexpr Span subspan(const size_type off,const size_type n) const {assert(off+n<=size()); return {begin_+off,begin_+off+n};}
     constexpr Span first_n(const size_type n) const {assert(n<=size()); return {begin_,begin_+n};}
     constexpr Span last_n(const size_type n) const {assert(n<=size()); return {end_-n,end_};}
+    constexpr Span no_first_n(const size_type n) const {assert(n<=size()); return {begin_+n,end_};}
+    constexpr Span no_last_n(const size_type n) const {assert(n<=size()); return {begin_,end_-n};}
+    constexpr Span no_first_last_n(const size_type first,const size_type last) const {assert(first+last<=size()); return {begin_+first,end_-last};}
 
     friend constexpr bool operator==(const Span& lhs,const Span& rhs) noexcept {
         if(lhs.size()!=rhs.size())

@@ -21,7 +21,7 @@ namespace yuki{ // Type traits and other compile-time facilities.
 
 /// Like `std::declval` but the return type is strictly the same as given.
 template<typename T>
-T declval() {static_assert(false);}
+T declval() noexcept {static_assert(false);}
 
 template<typename T,typename...>
 using always_type = T;
