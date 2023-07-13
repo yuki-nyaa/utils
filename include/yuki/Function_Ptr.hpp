@@ -13,21 +13,22 @@ struct Function_Ptr;
 
 template<typename R,typename... Args>
 struct Function_Ptr<R(Args...)>{
+    friend struct Function_Ptr<R(Args...)noexcept>;
   private:
     union storage_t{
         R(*fp_)(Args...);
         void* v_;
     } storage_;
-    R(*fwd_)(storage_t,Args...);
+    R(*fwd_)(storage_t,Args&&...);
 
-    static constexpr R fp_action(const storage_t s,Args... args) {return s.fp_(args...);}
+    static constexpr R fp_action(const storage_t s,Args&&... args) {return s.fp_(std::forward<Args>(args)...);}
   public:
     Function_Ptr() noexcept = default;
 
     template<typename U,typename=std::enable_if_t<!std::is_same_v<std::remove_cvref_t<U>,Function_Ptr<R(Args...)>>>>
     constexpr Function_Ptr(U&& u) noexcept :
         storage_{.v_=const_cast<void*>(static_cast<const void*>(&u))},
-        fwd_([](const storage_t s,Args... args)->R {return static_cast<U&&>((*static_cast<std::remove_reference_t<U>*>(s.v_)))(args...);})
+        fwd_([](const storage_t s,Args&&... args)->R {return static_cast<U&&>((*static_cast<std::remove_reference_t<U>*>(s.v_)))(std::forward<Args>(args)...);})
     {}
 
     template<typename U,typename=std::enable_if_t<!std::is_same_v<std::remove_cvref_t<U>,Function_Ptr<R(Args...)>>>> requires std::is_convertible_v<U&&,R(*)(Args...)>
@@ -47,15 +48,20 @@ struct Function_Ptr<R(Args...)>{
     {}
 
     constexpr Function_Ptr(const Function_Ptr<R(Args...)noexcept> fp_noexcept) noexcept : Function_Ptr(fp_noexcept.fp_except) {}
+    //constexpr Function_Ptr(const Function_Ptr<R(Args...)noexcept> fp_noexcept) noexcept : Function_Ptr(static_cast<const Function_Ptr&>(fp_noexcept)) {}
 
     constexpr Function_Ptr(const Function_Ref<R(Args...)> fr) noexcept : Function_Ptr(static_cast<const Function_Ptr&>(fr)) {}
     constexpr Function_Ptr(const Function_Ref<R(Args...)noexcept> fr) noexcept : Function_Ptr(static_cast<const Function_Ptr<R(Args...)noexcept>&>(fr).fp_except) {}
+    //constexpr Function_Ptr(const Function_Ref<R(Args...)noexcept> fr) noexcept : Function_Ptr(static_cast<const Function_Ptr&>(fr)) {}
 
     /// Member pointers are not supported. You should wrap them in lambdas to achieve the same effect.
     template<typename M,typename C>
     Function_Ptr(M C::*) = delete;
 
-    constexpr R operator()(Args... args) const {assert(fwd_); return fwd_(storage_,args...);}
+    //constexpr Function_Ptr& operator=(const Function_Ptr&) noexcept = default;
+    //constexpr Function_Ptr& operator=(const Function_Ptr<R(Args...)noexcept> fp_noexcept) noexcept {operator=(static_cast<const Function_Ptr&>(fp_noexcept)); return *this;}
+
+    constexpr R operator()(Args... args) const {assert(fwd_); return fwd_(storage_,std::forward<Args>(args)...);}
 
     explicit constexpr operator bool() const noexcept {return static_cast<bool>(fwd_);}
 
@@ -102,7 +108,7 @@ struct Function_Ptr<R(Args...)noexcept>{
     template<typename M,typename C>
     Function_Ptr(M C::*) = delete;
 
-    constexpr R operator()(Args... args) const noexcept {return fp_except(args...);}
+    constexpr R operator()(Args... args) const noexcept {assert(fp_except.fwd_); return fp_except.fwd_(fp_except.storage_,std::forward<Args>(args)...);}
 
     explicit constexpr operator bool() const noexcept {return static_cast<bool>(fp_except);}
 
@@ -120,6 +126,11 @@ struct Function_Ptr<R(Args...)noexcept>{
 //   typedef Function_Ptr<R(Args...)> FP_EXCEPT;
 //  public:
 //    using FP_EXCEPT::FP_EXCEPT;
+
+//    template<typename U,typename=std::enable_if_t<!std::is_same_v<std::remove_cvref_t<U>,Function_Ptr<R(Args...)noexcept>>>>
+//    constexpr Function_Ptr(U&& u) noexcept :
+//        Function_Ptr<R(Args...)>(std::forward<U>(u))
+//    {static_assert(noexcept(static_cast<U&&>(u)(yuki::declval<Args>()...)));}
 
 //    Function_Ptr(R(*fp)(Args...)) = delete;
 

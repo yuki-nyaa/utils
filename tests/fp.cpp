@@ -6,6 +6,7 @@ constexpr yuki::Function_Ptr<int(int)> fp1 = lambda1;
 static_assert(fp1);
 static_assert(fp1(100)==200);
 static_assert(fp1.storage_type()==yuki::FP_Storage_Type::VP);
+static_assert(!noexcept(fp1(100)));
 //constexpr yuki::Function_Ptr<int(int)> fp1_1 = [i=100](const int p){return p+i;}; // Error. The lifetime of the lambda ends after the initialization of `fp1_1` is finished.
 constexpr yuki::Function_Ptr<int(int)> fp1_2 = fp1;
 static_assert(fp1_2==fp1);
@@ -13,6 +14,7 @@ static_assert(fp1_2==fp1);
 constexpr yuki::Function_Ptr<int(int)noexcept> fp2 = [](const int p)noexcept{return p+100;};
 static_assert(fp2.storage_type()==yuki::FP_Storage_Type::FP);
 static_assert(fp2(100)==200);
+static_assert(noexcept(fp2(100)));
 
 constexpr int func1(int p) noexcept {return p*=2;}
 constexpr yuki::Function_Ptr<int(int)> fp3 = func1;
@@ -84,11 +86,13 @@ constexpr yuki::Function_Ptr<void()> fp15 = [](){++int1;};
 constexpr yuki::Function_Ref<int(int)> fr1 = lambda1;
 static_assert(fr1(100)==200);
 static_assert(fr1.storage_type()==yuki::FP_Storage_Type::VP);
+static_assert(!noexcept(fr1(100)));
 //constexpr yuki::Function_Ref<int(int)> fr1_1 = [i=100](const int p){return p+i;}; // Error. The lifetime of the lambda ends after the initialization of `fp1_1` is finished.
 
 constexpr yuki::Function_Ref<int(int)noexcept> fr2 = [](const int p)noexcept{return p+100;};
 static_assert(fr2.storage_type()==yuki::FP_Storage_Type::FP);
 static_assert(fr2(100)==200);
+static_assert(noexcept(fr2(100)));
 
 constexpr yuki::Function_Ref<int(int)> fr3 = func1;
 static_assert(fr3(200)==400);
@@ -140,6 +144,43 @@ struct Foo{
 //constexpr yuki::Function_Ref<int(const Foo&,int)noexcept> fr8 = &Foo::foo;
 
 
+struct Callable{
+    constexpr int operator()(int) & noexcept {return 1;}
+    constexpr int operator()(int) const& noexcept {return 2;}
+    constexpr int operator()(int) && noexcept {return 3;}
+    constexpr int operator()(int) const&& noexcept {return 4;}
+};
+constexpr Callable callable;
+constexpr yuki::Function_Ref<int(int)noexcept> fr7_2(callable);
+static_assert(fr7_2(0)==2);
+constexpr yuki::Function_Ref<int(int)noexcept> fr7_4(static_cast<const Callable&&>(callable));
+static_assert(fr7_4(0)==4);
+
+
+constexpr yuki::Function_Ref<int(void)noexcept> fr9([]()noexcept{return 123;});
+static_assert(fr9()==123);
+
+constexpr yuki::Function_Ref<int(int func(int))noexcept> fr10([](int func(int))noexcept{return func(1);});
+static_assert(fr10(func1)==2);
+
+
+
+
+#include<string>
+struct MoveCount{
+    static size_t mcount;
+    static size_t dcount;
+
+    std::string str;
+
+    MoveCount() noexcept = default;
+    MoveCount(MoveCount&& other) noexcept : str(std::move(other.str)) {++mcount;}
+    ~MoveCount() noexcept {++dcount;}
+};
+size_t MoveCount::mcount=0;
+size_t MoveCount::dcount=0;
+
+
 
 
 #include<cstdio>
@@ -148,8 +189,10 @@ int main(){
     assert(int1==235);
 
     yuki::Function_Ptr<int(int)> fp12 = nullptr;
+    assert(fp12.storage_type()==yuki::FP_Storage_Type::N);
     //fp12(0); // Assertion failure
     yuki::Function_Ptr<int(int)noexcept> fp13 = nullptr;
+    assert(fp13.storage_type()==yuki::FP_Storage_Type::N);
     //fp13(0); // Assertion failure
     fp12=fp3;
     assert(fp12.storage_type()==yuki::FP_Storage_Type::FP);
@@ -161,9 +204,15 @@ int main(){
     assert(fp13==fp12);
     //fp13=fp12; // Error
 
-    yuki::Function_Ptr<int(int)> fp1_2 = [i=100](const int p){return p+i;}; // Different from `fp1_1`, no errors reported as of g++ 13.1. This is actually undefined.
-    assert(fp1_2.storage_type()==yuki::FP_Storage_Type::VP);
-    assert(fp1_2(200)==300); // Does not have something as segfault on my machine though.
+    Callable callable_nc;
+    const yuki::Function_Ref<int(int)noexcept> fr7_1(callable_nc);
+    assert(fr7_1(0)==1);
+    const yuki::Function_Ref<int(int)noexcept> fr7_3(std::move(callable_nc));
+    assert(fr7_3(0)==3);
+
+    const yuki::Function_Ref<void(MoveCount)noexcept> fr_mc([](MoveCount mc)noexcept{mc.str.push_back('a');});
+    fr_mc(MoveCount{});
+    printf("%zu %zu\n",MoveCount::mcount,MoveCount::dcount);
 
     fputs("TEST DONE!",stdout);
 }
