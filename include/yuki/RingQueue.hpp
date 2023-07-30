@@ -534,14 +534,11 @@ struct RQ_Iterator_{
 
   public:
     typedef std::random_access_iterator_tag iterator_category;
-    typedef std::remove_reference_t<decltype(*p)> value_type;
     typedef typename RQ::difference_type difference_type;
-    typedef value_type* pointer;
-    typedef value_type& reference;
 
     constexpr RQ_Iterator_() noexcept = default;
 
-    constexpr value_type& operator*() const {return *p;}
+    constexpr auto& operator*() const {return *p;}
     constexpr P operator->() const {return p;}
     RQ_Iterator_& operator++() {rq->pre_inc(p);return *this;}
     RQ_Iterator_ operator++(int) {const RQ_Iterator_ orig=*this; rq->pre_inc(p); return orig;}

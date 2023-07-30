@@ -99,18 +99,14 @@ struct Tree_Iterator{
     P base;
 
     typedef std::bidirectional_iterator_tag iterator_category;
-    typedef std::remove_reference_t<decltype((base->value))> value_type;
-    typedef decltype(base-base) difference_type;
-    typedef value_type* pointer;
-    typedef value_type& reference;
 
     constexpr Tree_Iterator() noexcept = default;
     constexpr Tree_Iterator(const P p) noexcept : base(p) {}
 
     explicit constexpr operator bool() const noexcept {return static_cast<bool>(base);}
 
-    constexpr value_type& operator*() const {return base->value;}
-    constexpr value_type* operator->() const {return std::addressof(base->value);}
+    constexpr auto& operator*() const {return base->value;}
+    constexpr auto* operator->() const {return std::addressof(base->value);}
     Tree_Iterator& operator++() {base = tree_op::next(base); return *this;}
     Tree_Iterator& operator--() {base = tree_op::prev(base); return *this;}
     Tree_Iterator operator++(int) {const Tree_Iterator tmp = *this; operator++(); return tmp;}
@@ -231,7 +227,6 @@ struct RB_Tree : protected KV,protected C,protected A{
 
     typedef Tree_Iterator<pointer> non_const_iterator;
     typedef Tree_Iterator<const_pointer> const_iterator;
-    static_assert(std::is_same_v<typename const_iterator::value_type,const V>);
 
     constexpr bool empty() const {return !root_;}
     constexpr size_type size() const {return s_;}
