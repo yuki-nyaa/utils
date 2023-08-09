@@ -477,6 +477,9 @@ struct RingQueue : private A, private EC{
 
     void reserve(const size_type cap_new) {if(cap_new>cap) expand_(cap_new);}
 
+    friend RQ_Iterator_<RingQueue,pointer>;
+    friend RQ_Iterator_<RingQueue,const_pointer>;
+
     typedef RQ_Iterator_<RingQueue,pointer> iterator;
     typedef RQ_Iterator_<RingQueue,const_pointer> const_iterator;
 
@@ -531,7 +534,6 @@ struct RQ_Iterator_{
     RQ* rq = nullptr;
     P p = nullptr;
     constexpr RQ_Iterator_(RQ* const rqp,const P pp) noexcept : rq(rqp),p(pp) {}
-
   public:
     typedef std::random_access_iterator_tag iterator_category;
     typedef typename RQ::difference_type difference_type;

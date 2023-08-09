@@ -303,3 +303,19 @@ struct Cmd_Option_Table{
     } // cmd_parse
 }; // struct Cmd_Option_Table
 } // namespace yuki
+
+#define YUKI_CMD_ONE_PARAM_OPTION(name,cmd_data_type,zero_statement,multi_statement,...) \
+inline void name(cmd_data_type& cmd_data,const char*const*const argv,const size_t argc){ \
+    (void)argv; \
+    switch(argc){ \
+        case 0: \
+            zero_statement; \
+            break; \
+        default: \
+            multi_statement; \
+            [[fallthrough]]; \
+        case 1: \
+            __VA_ARGS__ \
+            break; \
+    } \
+}

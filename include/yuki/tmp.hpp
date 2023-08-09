@@ -375,6 +375,40 @@ constexpr T&& as_non_const(const T&& t) {return const_cast<T&&>(t);}
 template<typename T>
 constexpr T* const_kast(const T* const p) noexcept {return const_cast<T*>(p);}
 
+template<typename S,typename D>
+struct add_cvref_as {typedef D type;};
+template<typename S,typename D>
+struct add_cvref_as<const S,D> {typedef const D type;};
+template<typename S,typename D>
+struct add_cvref_as<S&,D> {typedef D& type;};
+template<typename S,typename D>
+struct add_cvref_as<const S&,D> {typedef const D& type;};
+template<typename S,typename D>
+struct add_cvref_as<S&&,D> {typedef D&& type;};
+template<typename S,typename D>
+struct add_cvref_as<const S&&,D> {typedef const D&& type;};
+template<typename S,typename D>
+struct add_cvref_as<volatile S,D> {typedef volatile D type;};
+template<typename S,typename D>
+struct add_cvref_as<const volatile S,D> {typedef const volatile D type;};
+template<typename S,typename D>
+struct add_cvref_as<volatile S&,D> {typedef volatile D& type;};
+template<typename S,typename D>
+struct add_cvref_as<const volatile S&,D> {typedef const volatile D& type;};
+template<typename S,typename D>
+struct add_cvref_as<volatile S&&,D> {typedef volatile D&& type;};
+template<typename S,typename D>
+struct add_cvref_as<const volatile S&&,D> {typedef const volatile D&& type;};
+
+template<typename S,typename D>
+using add_cvref_as_t = typename add_cvref_as<S,D>::type;
+
+template<typename S,typename D>
+using forward_like_type = typename add_cvref_as<S,std::remove_reference_t<D>>::type;
+
+template<typename S,typename D>
+constexpr forward_like_type<S&&,D> forward_like(D&& d) {return static_cast<forward_like_type<S&&,D>>(d);}
+
 template<typename T>
 struct add_lconst;
 template<typename T>
