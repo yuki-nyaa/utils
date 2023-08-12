@@ -19,7 +19,7 @@ struct NT{
 struct MyStr{
     const char* s;
     MyStr(const char* ss) noexcept : s(ss) {}
-    ~MyStr() noexcept {fprintf(stderr,"MyStr::~MyStr()\n");}
+    ~MyStr() noexcept {fputs("MyStr::~MyStr()\n",stderr);}
 };
 
 struct ncp{

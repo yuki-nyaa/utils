@@ -60,16 +60,16 @@ size_t char_table_max_nonzero=0;
 
 void write_c32(FILE* const out,const char32_t c){
     switch(c){
-        case U'\'' : fprintf(out,"U\'\\\'\'"); return; // Rather cryptic...
-        case U'\"' : fprintf(out,"U\'\\\"\'"); return; // Rather cryptic...
-        case U'\\' : fprintf(out,"U\'\\\\\'"); return; // Rather cryptic...
-        case U'\a' : fprintf(out,"U\'\\a\'"); return;
-        case U'\b' : fprintf(out,"U\'\\b\'"); return;
-        case U'\f' : fprintf(out,"U\'\\f\'"); return;
-        case U'\n' : fprintf(out,"U\'\\n\'"); return;
-        case U'\r' : fprintf(out,"U\'\\r\'"); return;
-        case U'\t' : fprintf(out,"U\'\\t\'"); return;
-        case U'\v' : fprintf(out,"U\'\\v\'"); return;
+        case U'\'' : fputs("U\'\\\'\'",out); return; // Rather cryptic...
+        case U'\"' : fputs("U\'\\\"\'",out); return; // Rather cryptic...
+        case U'\\' : fputs("U\'\\\\\'",out); return; // Rather cryptic...
+        case U'\a' : fputs("U\'\\a\'",out); return;
+        case U'\b' : fputs("U\'\\b\'",out); return;
+        case U'\f' : fputs("U\'\\f\'",out); return;
+        case U'\n' : fputs("U\'\\n\'",out); return;
+        case U'\r' : fputs("U\'\\r\'",out); return;
+        case U'\t' : fputs("U\'\\t\'",out); return;
+        case U'\v' : fputs("U\'\\v\'",out); return;
         default:{
             if(c<0x80U && isprint(c))
                 fprintf(out,"U\'%c\'",static_cast<char>(static_cast<unsigned char>(c)));
@@ -88,12 +88,12 @@ void write_cc(FILE* const out,const yuki::IntegralCIs_OV<char32_t>& cc){
     unsigned line_items=0;
     for(const yuki::CInterval<char32_t> ci : cc){
         if(line_items==0)
-            fprintf(out,IND);
+            fputs(IND,out);
         fputc(static_cast<unsigned char>('{'),out);
         write_c32(out,ci.lb);
         fputc(static_cast<unsigned char>(','),out);
         write_c32(out,ci.ub);
-        fprintf(out,"},");
+        fputs("},",out);
         if(line_items==YUKI_UGEN_MAX_LINE_ITEMS-1){
             fputc(static_cast<unsigned char>('\n'),out);
             line_items=0;
@@ -110,7 +110,7 @@ void write_cc(FILE* const out_h,FILE* const out_cpp,const char* const name,const
     if(cc.size()<=header_threshold){
         fprintf(out_h,"inline constexpr yuki::CInterval<char32_t> %s[%zu]={\n",name,cc.size());
         write_cc(out_h,cc);
-        fprintf(out_h,"};\n");
+        fputs("};\n",out_h);
     }else{
         fprintf(out_h,"extern const yuki::CInterval<char32_t> %s[%zu];\n",name,cc.size());
         fprintf(out_cpp,"extern const yuki::CInterval<char32_t> %s[%zu]={\n",name,cc.size());
@@ -127,7 +127,7 @@ void write_char_table(FILE* const out){
     unsigned line_tiny_items=0;
     for(unsigned i=0;i<char_table_max_nonzero+1;++i){
         if(line_tiny_items==0)
-            fprintf(out,IND);
+            fputs(IND,out);
         fprintf(out,"%u,",static_cast<unsigned>(char_table[i]));
         if(line_tiny_items==YUKI_UGEN_MAX_LINE_TINY_ITEMS-1){
             fputc(static_cast<unsigned char>('\n'),out);
@@ -242,8 +242,8 @@ void general_category(std::string& dir_ucd,std::string& dir_h,std::string& dir_c
         exit(EXIT_FAILURE);
     }
 
-    fprintf(out_h,YUKI_UGEN_HEADER_PROLOGUE);
-    fprintf(out_cpp,YUKI_UGEN_CPP_SIMPLE_PROLOGUE);
+    fputs(YUKI_UGEN_HEADER_PROLOGUE,out_h);
+    fputs(YUKI_UGEN_CPP_SIMPLE_PROLOGUE,out_cpp);
 
     struct{
         yuki::IntegralCIs_OV<char32_t> cc;
@@ -385,7 +385,7 @@ void general_category(std::string& dir_ucd,std::string& dir_h,std::string& dir_c
         //,static_cast<size_t>(UNICODE_TOTAL)
     );
 
-    fprintf(out_cpp,YUKI_UGEN_EPILOGUE);
+    fputs(YUKI_UGEN_EPILOGUE,out_cpp);
 
     fclose(in);
     fclose(out_h);
@@ -817,7 +817,7 @@ void write_enum_table(
     unsigned line_small_items=1;
     for(unsigned i=0;i<ans_size;++i){
         if(line_small_items==0)
-            fprintf(out_h,IND);
+            fputs(IND,out_h);
         fprintf(out_h,"%s,",ans[i].alias.data());
         if(line_small_items==enum_line_max-1){
             fputc(static_cast<unsigned char>('\n'),out_h);
@@ -839,7 +839,7 @@ void write_enum_table(
         );
         for(unsigned i=0;i<ans_size;++i){
             if(line_small_items==0)
-                fprintf(out_h,IND);
+                fputs(IND,out_h);
             fprintf(out_h,"{\"%s%s\",%s%s,%u},",ans[i].alias.data(),*(ans[i].duplicated)?disamb:"",ans[i].alias.data(),*(ans[i].duplicated)?disamb:"",ans[i].number);
             if(line_small_items==table_line_max-1){
                 fputc(static_cast<unsigned char>('\n'),out_h);
@@ -858,7 +858,7 @@ void write_enum_table(
         );
         for(unsigned i=0;i<ans_size;++i){
             if(line_small_items==0)
-                fprintf(out_cpp,IND);
+                fputs(IND,out_cpp);
             fprintf(out_cpp,"{\"%s%s\",%s%s,%u},",ans[i].alias.data(),*(ans[i].duplicated)?disamb:"",ans[i].alias.data(),*(ans[i].duplicated)?disamb:"",ans[i].number);
             if(line_small_items==table_line_max-1){
                 fputc(static_cast<unsigned char>('\n'),out_cpp);
@@ -893,13 +893,14 @@ void scripts(std::string& dir_ucd,std::string& dir_h,std::string& dir_cpp){
         exit(EXIT_FAILURE);
     }
 
-    fprintf(out_h,YUKI_UGEN_HEADER_PROLOGUE);
+    fputs(YUKI_UGEN_HEADER_PROLOGUE,out_h);
 
-    fprintf(out_cpp,
+    fputs(
         "#include<yuki/unicode/scripts.h>\n"
         "\n"
         "namespace yuki::unicode{\n"
-        "\n"
+        "\n",
+        out_cpp
     );
 
     assert(alias_table.scripts_linear_size<256);
@@ -1192,11 +1193,11 @@ void scripts(std::string& dir_ucd,std::string& dir_h,std::string& dir_cpp){
         scss.size
     );
     for(unsigned i=0;i<scss.size;++i){
-        fprintf(out_cpp,IND IND "{");
+        fputs(IND IND "{",out_cpp);
         const Scs scs = scss.storage[i];
         for(unsigned j=0;j<scs.size;++j)
             fprintf(out_cpp,"%u,",static_cast<unsigned>(scs.storage[j]));
-        fprintf(out_cpp,"},\n");
+        fputs("},\n",out_cpp);
     }
     fprintf(out_cpp,
         IND "}; // static constexpr ScriptExt::Core core[%u]\n"
@@ -1216,18 +1217,19 @@ void scripts(std::string& dir_ucd,std::string& dir_h,std::string& dir_cpp){
             fprintf(out_cpp,IND IND "case 0x%lX: return {core[%u],%u};\n",static_cast<unsigned long>(scsbc.c),scsbc.scs_i,static_cast<unsigned>(char_table[scsbc.c]));
         }
     }
-    fprintf(out_cpp,
+    fputs(
         IND IND "default: return script(c);\n"
         IND "} // switch(c)\n"
-        "} // ScriptExt script_ext(const char32_t c)\n\n\n"
+        "} // ScriptExt script_ext(const char32_t c)\n\n\n",
+        out_cpp
     );
 
     fprintf(out_cpp,"extern const unsigned char script_explicit[%zu]={\n",char_table_max_nonzero+1);
     write_char_table(out_cpp);
     fprintf(out_cpp,"}; // extern const unsigned char script_explicit[%zu]\n\n\n",char_table_max_nonzero+1);
 
-    fprintf(out_h,YUKI_UGEN_EPILOGUE);
-    fprintf(out_cpp,YUKI_UGEN_EPILOGUE);
+    fputs(YUKI_UGEN_EPILOGUE,out_h);
+    fputs(YUKI_UGEN_EPILOGUE,out_cpp);
 
     fclose(in);
     fclose(out_h);
@@ -1253,7 +1255,7 @@ void blocks(std::string& dir_ucd,std::string& dir_hpp){
         exit(EXIT_FAILURE);
     }
 
-    fprintf(out_hpp,YUKI_UGEN_HEADER_PROLOGUE);
+    fputs(YUKI_UGEN_HEADER_PROLOGUE,out_hpp);
 
     cc.clear();
     total_cp=0;
@@ -1286,7 +1288,7 @@ void blocks(std::string& dir_ucd,std::string& dir_hpp){
         write_c32(out_hpp,ci.lb);
         fputc(static_cast<unsigned char>(','),out_hpp);
         write_c32(out_hpp,ci.ub);
-        fprintf(out_hpp,"};\n");
+        fputs("};\n",out_hpp);
 
         cc.insert(ci);
         total_cp+=ci.size();
@@ -1296,7 +1298,7 @@ void blocks(std::string& dir_ucd,std::string& dir_hpp){
 
     write_enum_table(out_hpp,nullptr,"Block","block_table","_blk","NB",alias_table.blocks_linear,alias_table.blocks_linear_size,-1,YUKI_UGEN_MAX_LINE_ITEMS,YUKI_UGEN_MAX_LINE_BIG_ITEMS);
 
-    fprintf(out_hpp,
+    fputs(
         "constexpr Block block(const char32_t c){\n"
         IND "const Name_CC_Num<Block>* const p = yuki::find_in_cintervals(\n"
         IND IND "block_table+1,\n"
@@ -1306,10 +1308,11 @@ void blocks(std::string& dir_ucd,std::string& dir_hpp){
         IND IND "yuki::Less<yuki::CInterval<char32_t>>{}\n"
         IND ");\n"
         IND "return p!=block_table+sizeof(block_table)/sizeof(Name_CC_Num<Block>) ? p->num : Block::NB;\n"
-        "}\n"
+        "}\n",
+        out_hpp
     );
 
-    fprintf(out_hpp,YUKI_UGEN_EPILOGUE);
+    fputs(YUKI_UGEN_EPILOGUE,out_hpp);
 
     fclose(in);
     fclose(out_hpp);
@@ -1346,8 +1349,8 @@ void binary_properties(std::string& dir_ucd,std::string& dir_h,std::string& dir_
         exit(EXIT_FAILURE);
     }
 
-    fprintf(out_h,YUKI_UGEN_HEADER_PROLOGUE);
-    fprintf(out_cpp,YUKI_UGEN_CPP_SIMPLE_PROLOGUE);
+    fputs(YUKI_UGEN_HEADER_PROLOGUE,out_h);
+    fputs(YUKI_UGEN_CPP_SIMPLE_PROLOGUE,out_cpp);
 
     cc.clear();
     total_cp=0;
@@ -1453,8 +1456,8 @@ void binary_properties(std::string& dir_ucd,std::string& dir_h,std::string& dir_
         bp_table_total,bp_table_buf.c_str()
     );
 
-    fprintf(out_h,YUKI_UGEN_EPILOGUE);
-    fprintf(out_cpp,YUKI_UGEN_EPILOGUE);
+    fputs(YUKI_UGEN_EPILOGUE,out_h);
+    fputs(YUKI_UGEN_EPILOGUE,out_cpp);
 
     fclose(in);
     fclose(out_h);
@@ -1480,11 +1483,12 @@ void write_case(std::string& dir_ucd,std::string& dir_cpp){
         exit(EXIT_FAILURE);
     }
 
-    fprintf(out_cpp,
+    fputs(
         "namespace yuki::unicode{\n"
         "char32_t to_upper(const char32_t c){\n"
         "switch(c){\n"
-        "default: return c;\n"
+        "default: return c;\n",
+        out_cpp
     );
 
     struct UL_Pair{
@@ -1573,7 +1577,7 @@ void write_case(std::string& dir_ucd,std::string& dir_cpp){
     goto line;
     } // line
   write:
-    fprintf(out_cpp,
+    fputs(
         "} // switch(c)\n"
         "} // char32_t to_upper(const char32_t c)\n"
         "\n"
@@ -1582,11 +1586,12 @@ void write_case(std::string& dir_ucd,std::string& dir_cpp){
         "\n"
         "char32_t to_lower(const char32_t c){\n"
         "switch(c){\n"
-        "default: return c;\n"
+        "default: return c;\n",
+        out_cpp
     );
     for(const UL_Pair ulp : to_lower)
         fprintf(out_cpp,"case 0x%lX: return 0x%lX;\n",ulp.key,ulp.mapped);
-    fprintf(out_cpp,
+    fputs(
         "} // switch(c)\n"
         "} // char32_t to_lower(const char32_t c)\n"
         "\n"
@@ -1595,17 +1600,19 @@ void write_case(std::string& dir_ucd,std::string& dir_cpp){
         "\n"
         "char32_t to_title(const char32_t c){\n"
         "switch(c){\n"
-        "default: return c;\n"
+        "default: return c;\n",
+        out_cpp
     );
     for(const UL_Pair ulp : to_title)
         fprintf(out_cpp,"case 0x%lX: return 0x%lX;\n",ulp.key,ulp.mapped);
-    fprintf(out_cpp,
+    fputs(
         "} // switch(c)\n"
         "} // char32_t to_title(const char32_t c)\n"
         "\n"
         "\n"
         "\n"
-        "\n"
+        "\n",
+        out_cpp
     );
 
 
@@ -1618,7 +1625,7 @@ void write_case(std::string& dir_ucd,std::string& dir_cpp){
         exit(EXIT_FAILURE);
     }
 
-    fprintf(out_cpp,YUKI_UGEN_EPILOGUE);
+    fputs(YUKI_UGEN_EPILOGUE,out_cpp);
 
     fclose(in);
     fclose(out_cpp);
@@ -1642,12 +1649,13 @@ void mirror(std::string& dir_ucd,std::string& dir_hpp){
         exit(EXIT_FAILURE);
     }
 
-    fprintf(out_hpp,
+    fputs(
         "#pragma once\n"
         "namespace yuki::unicode{\n"
         "constexpr char32_t mirror(const char32_t c){\n"
         "switch(c){\n"
-        "default: return c;\n"
+        "default: return c;\n",
+        out_hpp
     );
 
   line:
@@ -1656,10 +1664,11 @@ void mirror(std::string& dir_ucd,std::string& dir_hpp){
         switch(const int c=fgetc(in); c){
             case EOF:
                 end:
-                fprintf(out_hpp,
+                fputs(
                     "} // switch(c)\n"
                     "} // constexpr char32_t mirror(const char32_t c)\n"
-                    YUKI_UGEN_EPILOGUE
+                    YUKI_UGEN_EPILOGUE,
+                    out_hpp
                 );
                 fclose(in);
                 fclose(out_hpp);
@@ -1705,8 +1714,8 @@ void mirror(std::string& dir_ucd,std::string& dir_hpp){
 
 int main(const int argc,const char*const*const argv){
     if(argc!=4){
-        fprintf(stderr,"Error: Wrong number of arguments!\n");
-        fprintf(stderr,"--Note: The first argument is the UCD path. The second is the header out path and the third is the cpp output path.\n");
+        fputs("Error: Wrong number of arguments!\n",stderr);
+        fputs("--Note: The first argument is the UCD path. The second is the header out path and the third is the cpp output path.\n",stderr);
         return EXIT_FAILURE;
     }
 
