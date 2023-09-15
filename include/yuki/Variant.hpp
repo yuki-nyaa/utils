@@ -28,21 +28,11 @@ namespace variant_impl_{
         template<size_t I>
         using alternative_t = typename uoe_alternative_impl<I,A,B>::type;
 
-        constexpr uoe() noexcept = default;
-
-        //constexpr uoe(const uoe&) noexcept requires (std::is_trivially_copy_constructible_v<A> && std::is_trivially_copy_constructible_v<B>) = default;
-        constexpr uoe(const uoe&) noexcept {}
-
-        //constexpr uoe(uoe&&) noexcept requires (std::is_trivially_move_constructible_v<A> && std::is_trivially_move_constructible_v<B>) = default;
-        constexpr uoe(uoe&&) noexcept = default;
-
         constexpr ~uoe() noexcept requires (std::is_trivially_destructible_v<A> && std::is_trivially_destructible_v<B>) = default;
         constexpr ~uoe() noexcept {}
 
-        //constexpr uoe& operator=(const uoe&) noexcept requires (std::is_trivially_copy_assignable_v<A> && std::is_trivially_copy_assignable_v<B>) = default;
-        constexpr uoe& operator=(const uoe&) noexcept = default;
+        constexpr uoe(uoe&&) noexcept = default;
 
-        //constexpr uoe& operator=(uoe&&) noexcept requires (std::is_trivially_move_assignable_v<A> && std::is_trivially_move_assignable_v<B>) = default;
         constexpr uoe& operator=(uoe&&) noexcept = default;
 
         template<typename... Args>
@@ -105,21 +95,11 @@ namespace variant_impl_{
         template<size_t I>
         using alternative_t = typename uou_alternative_impl<I,U0,U1,elements0>::type;
 
-        constexpr uou() noexcept = default;
-
-        //constexpr uou(const uou&) noexcept requires (std::is_trivially_copy_constructible_v<U0> && std::is_trivially_copy_constructible_v<U1>) = default;
-        constexpr uou(const uou&) noexcept = default;
-
-        //constexpr uou(uou&&) noexcept requires (std::is_trivially_move_constructible_v<U0> && std::is_trivially_move_constructible_v<U1>) = default;
-        constexpr uou(uou&&) noexcept = default;
-
         constexpr ~uou() noexcept requires (std::is_trivially_destructible_v<U0> && std::is_trivially_destructible_v<U1>) = default;
         constexpr ~uou() noexcept {}
 
-        //constexpr uou& operator=(const uou&) noexcept requires (std::is_trivially_copy_assignable_v<U0> && std::is_trivially_copy_assignable_v<U1>) = default;
-        constexpr uou& operator=(const uou&) noexcept = default;
+        constexpr uou(uou&&) noexcept = default;
 
-        //constexpr uou& operator=(uou&&) noexcept requires (std::is_trivially_move_assignable_v<U0> && std::is_trivially_move_assignable_v<U1>) = default;
         constexpr uou& operator=(uou&&) noexcept = default;
 
         template<size_t I,typename... Args> requires (I<=elements0/2)
@@ -218,7 +198,7 @@ namespace variant_impl_{
 
 
     #define YUKI_VARIANT_4(n,X) X(n) X(n+1) X(n+2) X(n+3)
-    #define YUKI_VARIANT_8(n,X) YUKI_VARIANT_4(n,X) YUKI_VARIANT_4(n+4,X)
+    #define YUKI_VARIANT_8(n,X) X(n) X(n+1) X(n+2) X(n+3) X(n+4) X(n+5) X(n+6) X(n+7)
     #define YUKI_VARIANT_16(n,X) YUKI_VARIANT_4(n,X) YUKI_VARIANT_4(n+4,X) YUKI_VARIANT_4(n+8,X) YUKI_VARIANT_4(n+12,X)
     #define YUKI_VARIANT_32(n,X) YUKI_VARIANT_8(n,X) YUKI_VARIANT_8(n+8,X) YUKI_VARIANT_8(n+16,X) YUKI_VARIANT_8(n+24,X)
     #define YUKI_VARIANT_64(n,X) YUKI_VARIANT_16(n,X) YUKI_VARIANT_16(n+16,X) YUKI_VARIANT_16(n+32,X) YUKI_VARIANT_16(n+48,X)
@@ -226,7 +206,7 @@ namespace variant_impl_{
     #define YUKI_VARIANT_256(n,X) YUKI_VARIANT_64(n,X) YUKI_VARIANT_64(n+64,X) YUKI_VARIANT_64(n+128,X) YUKI_VARIANT_64(n+192,X)
 
     #define YUKI_VARIANT_SINGLE_VISIT_CASE(n) \
-        case (n) : \
+        case n: \
     		if constexpr(n < V_nocvref::size) \
 			    return std::forward<F>(f)(std::forward<V>(v).template get<n>(),std::forward<Vs>(vs).template get<n>()...); \
 
@@ -237,7 +217,7 @@ namespace variant_impl_{
             switch(v.index()){ \
                 YUKI_VARIANT_##n(0,YUKI_VARIANT_SINGLE_VISIT_CASE) \
             } \
-            __builtin_unreachable();\
+            std::unreachable(); \
         }
 
     YUKI_VARIANT_SINGLE_VISIT_N(4)
@@ -301,6 +281,7 @@ namespace variant_impl_{
 template<typename R,typename F,typename V>
 constexpr R visit(F&& f,V&& v){
     typedef std::remove_cvref_t<V> V_nocvref;
+    static_assert(V_nocvref::size!=0);
 
     #define YUKI_VARIANT_VISIT_BRANCH(n) \
         else if constexpr(V_nocvref::size<=n) \
@@ -323,6 +304,7 @@ constexpr R visit(F&& f,V&& v){
 
 template<typename R,typename F,typename V0,typename... Vs>
 constexpr R visit(F&& f,V0&& v0,Vs&&... vs){
+    static_assert(((std::remove_cvref_t<V0>::size!=0) && ... && (std::remove_cvref_t<Vs>::size!=0)));
     return visit<R>(
         [&f,&v0]<typename... Args>(Args&&... vsp) -> R {
             return visit<R>(
@@ -336,7 +318,8 @@ constexpr R visit(F&& f,V0&& v0,Vs&&... vs){
 }
 
 template<int=0,typename F,typename... Vs>
-constexpr auto visit(F&& f,Vs&&... vs) -> decltype(std::forward<F>(f)(std::forward<Vs>(vs).template get<0>()...)) {
+constexpr auto visit(F&& f,Vs&&... vs){
+    static_assert((... && (std::remove_cvref_t<Vs>::size!=0)));
     typedef decltype(std::forward<F>(f)(std::forward<Vs>(vs).template get<0>()...)) R;
     return visit<R,F,Vs...>(std::forward<F>(f),std::forward<Vs>(vs)...);
 }
@@ -346,6 +329,7 @@ constexpr void visit(F&&) {}
 
 template<typename R,typename F,typename V,typename... Vs>
 constexpr R visit_homogenous(F&& f,V&& v,Vs&&... vs){
+    static_assert(((std::remove_cvref_t<V>::size!=0) && ... && (std::remove_cvref_t<Vs>::size!=0)));
     {
     const auto i = v.index();
     assert((... && (vs.index()==i)));
@@ -373,7 +357,8 @@ constexpr R visit_homogenous(F&& f,V&& v,Vs&&... vs){
 }
 
 template<int=0,typename F,typename... Vs>
-constexpr auto visit_homogenous(F&& f,Vs&&... vs) -> decltype(std::forward<F>(f)(std::forward<Vs>(vs).template get<0>()...)) {
+constexpr auto visit_homogenous(F&& f,Vs&&... vs){
+    static_assert((... && (std::remove_cvref_t<Vs>::size!=0)));
     typedef decltype(std::forward<F>(f)(std::forward<Vs>(vs).template get<0>()...)) R;
     return visit_homogenous<R,F,Vs...>(std::forward<F>(f),std::forward<Vs>(vs)...);
 }
@@ -425,10 +410,12 @@ template<typename T>
 struct get_visitor_t{
     template<typename V>
     static constexpr T* operator()(V& v){
-        if constexpr(std::is_constructible_v<T*,V*>)
+        if constexpr(std::is_convertible_v<V*,T*>)
             return std::addressof(v);
-        else
+        else{
+            assert(false);
             return nullptr;
+        }
     }
 };
 
@@ -533,10 +520,10 @@ struct Variant{
         active_(I)
     {}
 
-    template<typename T,typename... Args,size_t I=yuki::type_to_num_v<T,Ts...>>
+    template<typename T,typename... Args>
     explicit constexpr Variant(std::in_place_type_t<T>,Args&&... args) noexcept :
-        tu_(std::in_place_index<I>,std::forward<Args>(args)...),
-        active_(I)
+        tu_(std::in_place_index<yuki::type_to_num_v<T,Ts...>>,std::forward<Args>(args)...),
+        active_(yuki::type_to_num_v<T,Ts...>)
     {}
 
     template<typename T,typename=std::enable_if_t<!std::is_same_v<std::remove_cvref_t<T>,Variant>>>
@@ -553,25 +540,25 @@ struct Variant{
     template<size_t I>
     constexpr decltype(auto) get() const&& {assert(I==active_);return tu_.template get<I>();}
 
-    template<typename T,size_t I=yuki::type_to_num_v<T,Ts...>>
+    template<typename T>
     constexpr T& get() & {
-        static_assert(I!=yuki::type_to_num_nomatch);
-        return get<I>();
+        static_assert(yuki::type_to_num_v<T,Ts...>!=yuki::type_to_num_nomatch);
+        return get<yuki::type_to_num_v<T,Ts...>>();
     }
-    template<typename T,size_t I=yuki::type_to_num_v<T,Ts...>>
+    template<typename T>
     constexpr const T& get() const& {
-        static_assert(I!=yuki::type_to_num_nomatch);
-        return get<I>();
+        static_assert(yuki::type_to_num_v<T,Ts...>!=yuki::type_to_num_nomatch);
+        return get<yuki::type_to_num_v<T,Ts...>>();
     }
-    template<typename T,size_t I=yuki::type_to_num_v<T,Ts...>>
+    template<typename T>
     constexpr T&& get() && {
-        static_assert(I!=yuki::type_to_num_nomatch);
-        return get<I>();
+        static_assert(yuki::type_to_num_v<T,Ts...>!=yuki::type_to_num_nomatch);
+        return get<yuki::type_to_num_v<T,Ts...>>();
     }
-    template<typename T,size_t I=yuki::type_to_num_v<T,Ts...>>
+    template<typename T>
     constexpr const T&& get() const&& {
-        static_assert(I!=yuki::type_to_num_nomatch);
-        return get<I>();
+        static_assert(yuki::type_to_num_v<T,Ts...>!=yuki::type_to_num_nomatch);
+        return get<yuki::type_to_num_v<T,Ts...>>();
     }
 
     template<size_t I,typename... Args>
@@ -589,10 +576,10 @@ struct Variant{
         return get<I>();
     }
 
-    template<typename T,typename... Args,size_t I=yuki::type_to_num_v<T,Ts...>>
+    template<typename T,typename... Args>
     constexpr T& emplace(Args&&... args){
-        static_assert(I!=yuki::type_to_num_nomatch);
-        return emplace<I>(std::forward<Args>(args)...);
+        static_assert(yuki::type_to_num_v<T,Ts...>!=yuki::type_to_num_nomatch);
+        return emplace<yuki::type_to_num_v<T,Ts...>>(std::forward<Args>(args)...);
     }
 
     template<typename T,typename=std::enable_if_t<!std::is_same_v<std::remove_cvref_t<T>,Variant>>,size_t I=decltype(variant_impl_::select_overload<std::make_index_sequence<size>,T&&,Ts...>::f(std::declval<T>()))::value>
@@ -608,29 +595,28 @@ struct Variant{
             return emplace<I>(std::forward<T>(t));
     }
 
-    template<typename T,typename U,size_t I=yuki::type_to_num_v<T,Ts...>>
+    template<typename T,typename U>
     constexpr T& emplace_or_assign(U&& u){
-        static_assert(I!=yuki::type_to_num_nomatch);
+        static_assert(yuki::type_to_num_v<T,Ts...>!=yuki::type_to_num_nomatch);
         if(std::is_assignable_v<T&,U&&> && holds_alternative<T>()){
             visit<void>([&u]<typename V>(V&& v){if constexpr(std::is_assignable_v<V&&,U&&>) std::forward<V>(v)=std::forward<U>(u);},*this);
             return *visit<T*>(get_visitor<T>,*this);
         }else
-            return emplace<I>(std::forward<U>(u));
+            return emplace<yuki::type_to_num_v<T,Ts...>>(std::forward<U>(u));
     }
 
-    template<void* =nullptr,typename T,typename U=decltype(variant_impl_::select_overload<std::make_index_sequence<size>,T&&,Ts...>::f(std::declval<T>()))>
+    template<void* =nullptr,typename T>
     constexpr void emplace_or_assign(T&& t){
         if(visit<bool>(is_assignable_from_visitor<T&&>,*this))
             visit<void>([&t]<typename V>(V&& v){if constexpr(std::is_assignable_v<V&&,T&&>) std::forward<V>(v)=std::forward<T>(t);},*this);
         else
-            emplace<U::value>(std::forward<T>(t));
+            emplace<decltype(variant_impl_::select_overload<std::make_index_sequence<size>,T&&,Ts...>::f(std::forward<T>(t)))::value>(std::forward<T>(t));
     }
 };
 
 template<>
 struct Variant<> {
     static constexpr size_t size = 0;
-    static constexpr size_t index() {return 0;}
 };
 
 struct Variant_Dummy {};
