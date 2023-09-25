@@ -19,23 +19,6 @@ void print_line(FILE* const fp,const T& message) {fmt::print(fp,"{}\n",message);
 template<char sep = ' ',typename... Ts>
 void print_space(FILE* const fp,const Ts&... messages) {(...,(fmt::print(fp,"{}{}",messages,sep))); fputc(static_cast<unsigned char>('\n'),fp);}
 
-template<typename... Args>
-void try_print(FILE* const fp,const std::string_view format,const Args&... args){
-    if(fp)
-        fmt::vprint(fp,format,fmt::make_format_args(args...));
-}
-
-template<typename... Args>
-int try_fprintf(FILE* const fp,const char* const fmt,const Args... args) {return fp ? fprintf(fp,fmt,args...) : 0;}
-
-// The standard does not say what would happen with `fclose(NULL/nullptr)`. It even does not say it's undefined.
-inline int try_fclose(FILE* const fp){
-    if(fp)
-        return fclose(fp);
-    else
-        return 0;
-}
-
 inline void print_loc(FILE* const fp,const std::string_view filename,const size_t line,const size_t col){
     fmt::print(fp,"{}:{}:{}: ",filename,line,col);
 }
@@ -43,18 +26,6 @@ inline void print_loc(FILE* const fp,const std::string_view filename,const size_
 template<typename... Args>
 void print_error(FILE* const fp,const std::string_view format,const Args&... args){
     fputs("ERROR: ",fp);
-    fmt::vprint(fp,format,fmt::make_format_args(args...));
-    fflush(fp);
-}
-template<typename... Args>
-void print_warning(FILE* const fp,const std::string_view format,const Args&... args){
-    fputs("WARNING: ",fp);
-    fmt::vprint(fp,format,fmt::make_format_args(args...));
-    fflush(fp);
-}
-template<typename... Args>
-void print_note(FILE* const fp,const std::string_view format,const Args&... args){
-    fputs("--NOTE: ",fp);
     fmt::vprint(fp,format,fmt::make_format_args(args...));
     fflush(fp);
 }

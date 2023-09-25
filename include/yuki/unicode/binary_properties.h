@@ -101,12 +101,12 @@ extern const yuki::CInterval<char32_t> OAlpha[240];
 inline constexpr size_t OAlpha_total=1425;
 
 
-inline constexpr yuki::CInterval<char32_t> Ideo[20]={
+inline constexpr yuki::CInterval<char32_t> Ideo[21]={
     {0x3006,0x3007},{0x3021,0x3029},{0x3038,0x303A},{0x3400,0x4DBF},{0x4E00,0x9FFF},{0xF900,0xFA6D},{0xFA70,0xFAD9},{0x16FE4,0x16FE4},
     {0x17000,0x187F7},{0x18800,0x18CD5},{0x18D00,0x18D08},{0x1B170,0x1B2FB},{0x20000,0x2A6DF},{0x2A700,0x2B739},{0x2B740,0x2B81D},{0x2B820,0x2CEA1},
-    {0x2CEB0,0x2EBE0},{0x2F800,0x2FA1D},{0x30000,0x3134A},{0x31350,0x323AF},
+    {0x2CEB0,0x2EBE0},{0x2EBF0,0x2EE5D},{0x2F800,0x2FA1D},{0x30000,0x3134A},{0x31350,0x323AF},
 };
-inline constexpr size_t Ideo_total=105854;
+inline constexpr size_t Ideo_total=106476;
 
 
 extern const yuki::CInterval<char32_t> Dia[195];
@@ -155,10 +155,10 @@ inline constexpr yuki::CInterval<char32_t> OGr_Ext[25]={
 inline constexpr size_t OGr_Ext_total=127;
 
 
-inline constexpr yuki::CInterval<char32_t> IDSB[2]={
-    {0x2FF0,0x2FF1},{0x2FF4,0x2FFB},
+inline constexpr yuki::CInterval<char32_t> IDSB[3]={
+    {0x2FF0,0x2FF1},{0x2FF4,0x2FFD},{0x31EF,0x31EF},
 };
-inline constexpr size_t IDSB_total=10;
+inline constexpr size_t IDSB_total=13;
 
 
 inline constexpr yuki::CInterval<char32_t> IDST[1]={
@@ -167,17 +167,24 @@ inline constexpr yuki::CInterval<char32_t> IDST[1]={
 inline constexpr size_t IDST_total=2;
 
 
+inline constexpr yuki::CInterval<char32_t> IDSU[1]={
+    {0x2FFE,0x2FFF},
+};
+inline constexpr size_t IDSU_total=2;
+
+
 inline constexpr yuki::CInterval<char32_t> Radical[3]={
     {0x2E80,0x2E99},{0x2E9B,0x2EF3},{0x2F00,0x2FD5},
 };
 inline constexpr size_t Radical_total=329;
 
 
-inline constexpr yuki::CInterval<char32_t> UIdeo[16]={
+inline constexpr yuki::CInterval<char32_t> UIdeo[17]={
     {0x3400,0x4DBF},{0x4E00,0x9FFF},{0xFA0E,0xFA0F},{0xFA11,0xFA11},{0xFA13,0xFA14},{0xFA1F,0xFA1F},{0xFA21,0xFA21},{0xFA23,0xFA24},
-    {0xFA27,0xFA29},{0x20000,0x2A6DF},{0x2A700,0x2B739},{0x2B740,0x2B81D},{0x2B820,0x2CEA1},{0x2CEB0,0x2EBE0},{0x30000,0x3134A},{0x31350,0x323AF},
+    {0xFA27,0xFA29},{0x20000,0x2A6DF},{0x2A700,0x2B739},{0x2B740,0x2B81D},{0x2B820,0x2CEA1},{0x2CEB0,0x2EBE0},{0x2EBF0,0x2EE5D},{0x30000,0x3134A},
+    {0x31350,0x323AF},
 };
-inline constexpr size_t UIdeo_total=97058;
+inline constexpr size_t UIdeo_total=97680;
 
 
 inline constexpr yuki::CInterval<char32_t> ODI[11]={
@@ -215,25 +222,41 @@ inline constexpr yuki::CInterval<char32_t> OIDS[4]={
 inline constexpr size_t OIDS_total=6;
 
 
-inline constexpr yuki::CInterval<char32_t> OIDC[4]={
-    {0xB7,0xB7},{0x387,0x387},{0x1369,0x1371},{0x19DA,0x19DA},
+inline constexpr yuki::CInterval<char32_t> OIDC[7]={
+    {0xB7,0xB7},{0x387,0x387},{0x1369,0x1371},{0x19DA,0x19DA},{0x200C,0x200D},{0x30FB,0x30FB},{0xFF65,0xFF65},
 };
-inline constexpr size_t OIDC_total=12;
+inline constexpr size_t OIDC_total=16;
 
 
-inline constexpr yuki::CInterval<char32_t> STerm[80]={
+inline constexpr yuki::CInterval<char32_t> ID_Compat_Math_Continue[18]={
+    {0xB2,0xB3},{0xB9,0xB9},{0x2070,0x2070},{0x2074,0x207E},{0x2080,0x208E},{0x2202,0x2202},{0x2207,0x2207},{0x221E,0x221E},
+    {0x1D6C1,0x1D6C1},{0x1D6DB,0x1D6DB},{0x1D6FB,0x1D6FB},{0x1D715,0x1D715},{0x1D735,0x1D735},{0x1D74F,0x1D74F},{0x1D76F,0x1D76F},{0x1D789,0x1D789},
+    {0x1D7A9,0x1D7A9},{0x1D7C3,0x1D7C3},
+};
+inline constexpr size_t ID_Compat_Math_Continue_total=43;
+
+
+inline constexpr yuki::CInterval<char32_t> ID_Compat_Math_Start[13]={
+    {0x2202,0x2202},{0x2207,0x2207},{0x221E,0x221E},{0x1D6C1,0x1D6C1},{0x1D6DB,0x1D6DB},{0x1D6FB,0x1D6FB},{0x1D715,0x1D715},{0x1D735,0x1D735},
+    {0x1D74F,0x1D74F},{0x1D76F,0x1D76F},{0x1D789,0x1D789},{0x1D7A9,0x1D7A9},{0x1D7C3,0x1D7C3},
+};
+inline constexpr size_t ID_Compat_Math_Start_total=13;
+
+
+inline constexpr yuki::CInterval<char32_t> STerm[81]={
     {U'!',U'!'},{U'.',U'.'},{U'?',U'?'},{0x589,0x589},{0x61D,0x61F},{0x6D4,0x6D4},{0x700,0x702},{0x7F9,0x7F9},
     {0x837,0x837},{0x839,0x839},{0x83D,0x83E},{0x964,0x965},{0x104A,0x104B},{0x1362,0x1362},{0x1367,0x1368},{0x166E,0x166E},
-    {0x1735,0x1736},{0x1803,0x1803},{0x1809,0x1809},{0x1944,0x1945},{0x1AA8,0x1AAB},{0x1B5A,0x1B5B},{0x1B5E,0x1B5F},{0x1B7D,0x1B7E},
-    {0x1C3B,0x1C3C},{0x1C7E,0x1C7F},{0x203C,0x203D},{0x2047,0x2049},{0x2E2E,0x2E2E},{0x2E3C,0x2E3C},{0x2E53,0x2E54},{0x3002,0x3002},
-    {0xA4FF,0xA4FF},{0xA60E,0xA60F},{0xA6F3,0xA6F3},{0xA6F7,0xA6F7},{0xA876,0xA877},{0xA8CE,0xA8CF},{0xA92F,0xA92F},{0xA9C8,0xA9C9},
-    {0xAA5D,0xAA5F},{0xAAF0,0xAAF1},{0xABEB,0xABEB},{0xFE52,0xFE52},{0xFE56,0xFE57},{0xFF01,0xFF01},{0xFF0E,0xFF0E},{0xFF1F,0xFF1F},
-    {0xFF61,0xFF61},{0x10A56,0x10A57},{0x10F55,0x10F59},{0x10F86,0x10F89},{0x11047,0x11048},{0x110BE,0x110C1},{0x11141,0x11143},{0x111C5,0x111C6},
-    {0x111CD,0x111CD},{0x111DE,0x111DF},{0x11238,0x11239},{0x1123B,0x1123C},{0x112A9,0x112A9},{0x1144B,0x1144C},{0x115C2,0x115C3},{0x115C9,0x115D7},
-    {0x11641,0x11642},{0x1173C,0x1173E},{0x11944,0x11944},{0x11946,0x11946},{0x11A42,0x11A43},{0x11A9B,0x11A9C},{0x11C41,0x11C42},{0x11EF7,0x11EF8},
-    {0x11F43,0x11F44},{0x16A6E,0x16A6F},{0x16AF5,0x16AF5},{0x16B37,0x16B38},{0x16B44,0x16B44},{0x16E98,0x16E98},{0x1BC9F,0x1BC9F},{0x1DA88,0x1DA88},
+    {0x1735,0x1736},{0x17D4,0x17D5},{0x1803,0x1803},{0x1809,0x1809},{0x1944,0x1945},{0x1AA8,0x1AAB},{0x1B5A,0x1B5B},{0x1B5E,0x1B5F},
+    {0x1B7D,0x1B7E},{0x1C3B,0x1C3C},{0x1C7E,0x1C7F},{0x203C,0x203D},{0x2047,0x2049},{0x2E2E,0x2E2E},{0x2E3C,0x2E3C},{0x2E53,0x2E54},
+    {0x3002,0x3002},{0xA4FF,0xA4FF},{0xA60E,0xA60F},{0xA6F3,0xA6F3},{0xA6F7,0xA6F7},{0xA876,0xA877},{0xA8CE,0xA8CF},{0xA92F,0xA92F},
+    {0xA9C8,0xA9C9},{0xAA5D,0xAA5F},{0xAAF0,0xAAF1},{0xABEB,0xABEB},{0xFE52,0xFE52},{0xFE56,0xFE57},{0xFF01,0xFF01},{0xFF0E,0xFF0E},
+    {0xFF1F,0xFF1F},{0xFF61,0xFF61},{0x10A56,0x10A57},{0x10F55,0x10F59},{0x10F86,0x10F89},{0x11047,0x11048},{0x110BE,0x110C1},{0x11141,0x11143},
+    {0x111C5,0x111C6},{0x111CD,0x111CD},{0x111DE,0x111DF},{0x11238,0x11239},{0x1123B,0x1123C},{0x112A9,0x112A9},{0x1144B,0x1144C},{0x115C2,0x115C3},
+    {0x115C9,0x115D7},{0x11641,0x11642},{0x1173C,0x1173E},{0x11944,0x11944},{0x11946,0x11946},{0x11A42,0x11A43},{0x11A9B,0x11A9C},{0x11C41,0x11C42},
+    {0x11EF7,0x11EF8},{0x11F43,0x11F44},{0x16A6E,0x16A6F},{0x16AF5,0x16AF5},{0x16B37,0x16B38},{0x16B44,0x16B44},{0x16E98,0x16E98},{0x1BC9F,0x1BC9F},
+    {0x1DA88,0x1DA88},
 };
-inline constexpr size_t STerm_total=154;
+inline constexpr size_t STerm_total=156;
 
 
 inline constexpr yuki::CInterval<char32_t> VS_bp[4]={
@@ -292,8 +315,8 @@ inline constexpr yuki::CInterval<char32_t> Math[138]={
 inline constexpr size_t Math_total=2310;
 
 
-extern const yuki::CInterval<char32_t> Alpha[732];
-inline constexpr size_t Alpha_total=137765;
+extern const yuki::CInterval<char32_t> Alpha[733];
+inline constexpr size_t Alpha_total=138387;
 
 
 extern const yuki::CInterval<char32_t> Lower[671];
@@ -371,20 +394,20 @@ inline constexpr yuki::CInterval<char32_t> CWCM[131]={
 inline constexpr size_t CWCM_total=2927;
 
 
-extern const yuki::CInterval<char32_t> IDS[659];
-inline constexpr size_t IDS_total=136345;
+extern const yuki::CInterval<char32_t> IDS[660];
+inline constexpr size_t IDS_total=136967;
 
 
-extern const yuki::CInterval<char32_t> IDC_bp[768];
-inline constexpr size_t IDC_bp_total=139482;
+extern const yuki::CInterval<char32_t> IDC_bp[769];
+inline constexpr size_t IDC_bp_total=140108;
 
 
-extern const yuki::CInterval<char32_t> XIDS[666];
-inline constexpr size_t XIDS_total=136322;
+extern const yuki::CInterval<char32_t> XIDS[667];
+inline constexpr size_t XIDS_total=136944;
 
 
-extern const yuki::CInterval<char32_t> XIDC[775];
-inline constexpr size_t XIDC_total=139463;
+extern const yuki::CInterval<char32_t> XIDC[776];
+inline constexpr size_t XIDC_total=140089;
 
 
 inline constexpr yuki::CInterval<char32_t> DI[17]={
@@ -400,7 +423,7 @@ inline constexpr size_t Gr_Ext_total=2125;
 
 
 extern const yuki::CInterval<char32_t> Gr_Base[875];
-inline constexpr size_t Gr_Base_total=146986;
+inline constexpr size_t Gr_Base_total=147613;
 
 
 inline constexpr yuki::CInterval<char32_t> Gr_Link[56]={
@@ -415,14 +438,14 @@ inline constexpr yuki::CInterval<char32_t> Gr_Link[56]={
 inline constexpr size_t Gr_Link_total=65;
 
 
-inline constexpr Name_CC bproperty_table[53]={
+inline constexpr Name_CC bproperty_table[56]={
     {"WSpace",WSpace},{"Bidi_C",Bidi_C},{"Join_C",Join_C},{"Dash",Dash},{"Hyphen",Hyphen},{"QMark",QMark},{"Term",Term},{"OMath",OMath},
     {"Hex",Hex},{"AHex",AHex},{"OAlpha",OAlpha},{"Ideo",Ideo},{"Dia",Dia},{"Ext",Ext},{"OLower",OLower},{"OUpper",OUpper},
-    {"NChar",NChar},{"OGr_Ext",OGr_Ext},{"IDSB",IDSB},{"IDST",IDST},{"Radical",Radical},{"UIdeo",UIdeo},{"ODI",ODI},{"Dep",Dep},
-    {"SD",SD},{"LOE",LOE},{"OIDS",OIDS},{"OIDC",OIDC},{"STerm",STerm},{"VS_bp",VS_bp},{"Pat_WS",Pat_WS},{"Pat_Syn",Pat_Syn},
-    {"PCM",PCM},{"RI",RI},{"Math",Math},{"Alpha",Alpha},{"Lower",Lower},{"Upper",Upper},{"Cased",Cased},{"CI",CI},
-    {"CWL",CWL},{"CWU",CWU},{"CWT",CWT},{"CWCF",CWCF},{"CWCM",CWCM},{"IDS",IDS},{"IDC_bp",IDC_bp},{"XIDS",XIDS},
-    {"XIDC",XIDC},{"DI",DI},{"Gr_Ext",Gr_Ext},{"Gr_Base",Gr_Base},{"Gr_Link",Gr_Link},
+    {"NChar",NChar},{"OGr_Ext",OGr_Ext},{"IDSB",IDSB},{"IDST",IDST},{"IDSU",IDSU},{"Radical",Radical},{"UIdeo",UIdeo},{"ODI",ODI},
+    {"Dep",Dep},{"SD",SD},{"LOE",LOE},{"OIDS",OIDS},{"OIDC",OIDC},{"ID_Compat_Math_Continue",ID_Compat_Math_Continue},{"ID_Compat_Math_Start",ID_Compat_Math_Start},{"STerm",STerm},
+    {"VS_bp",VS_bp},{"Pat_WS",Pat_WS},{"Pat_Syn",Pat_Syn},{"PCM",PCM},{"RI",RI},{"Math",Math},{"Alpha",Alpha},{"Lower",Lower},
+    {"Upper",Upper},{"Cased",Cased},{"CI",CI},{"CWL",CWL},{"CWU",CWU},{"CWT",CWT},{"CWCF",CWCF},{"CWCM",CWCM},
+    {"IDS",IDS},{"IDC_bp",IDC_bp},{"XIDS",XIDS},{"XIDC",XIDC},{"DI",DI},{"Gr_Ext",Gr_Ext},{"Gr_Base",Gr_Base},{"Gr_Link",Gr_Link},
 };
 
 

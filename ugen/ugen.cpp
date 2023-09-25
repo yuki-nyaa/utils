@@ -33,7 +33,7 @@ struct Buf{
     #endif
 
     void push_back(const char c){
-        assert(size<sizeof(data));
+        assert(size<sizeof(data)); // Increase `data`'s extent if it fires.
         data[size++]=c;
         #ifdef YUKI_UGEN_DBG
         if(size>max_size)
@@ -480,7 +480,7 @@ struct Alias_Table{
     yuki::CHashTable_Str<Alias_Num,Name_Alias_Num::Alias,Name_Alias_Num::Nil,1024> scripts_by_alias;
     yuki::CHashTable_Str<Alias_Num,Name_Alias_Num::Alias,Name_Alias_Num::Nil,1024> blocks_by_alias;
 
-    static constexpr size_t blocks_linear_capacity = 327;
+    static constexpr size_t blocks_linear_capacity = 328;
     static constexpr size_t scripts_linear_capacity = 163;
     Alias_Num blocks_linear[blocks_linear_capacity];
     Alias_Num scripts_linear[scripts_linear_capacity];
@@ -546,7 +546,7 @@ Alias_Table::Alias_Table(std::string& dir_ucd) noexcept {
                             case ' ':
                                 assert(scripts.size()==0);
                                 if(buf1.size!=2 || buf1.data[0]!='N' || buf1.data[1]!='B'){
-                                    assert(blocks_linear_size<blocks_linear_capacity);
+                                    assert(blocks_linear_size<blocks_linear_capacity); // Increase `blocks_linear_capacity` if it fires.
                                     Name_Alias_Num* const inserted = blocks.emplace(Name_Alias_Num{std::string(buf.data,buf.size),std::string(buf1.data,buf1.size),blocks_linear_size+1});
                                     blocks_linear[blocks_linear_size] = *inserted;
                                     blocks_by_alias.emplace(Alias_Num(*inserted));
@@ -563,7 +563,7 @@ Alias_Table::Alias_Table(std::string& dir_ucd) noexcept {
                             case '\n':
                                 assert(scripts.size()==0);
                                 if(buf1.size!=2 || buf1.data[0]!='N' || buf1.data[1]!='B'){
-                                    assert(blocks_linear_size<blocks_linear_capacity);
+                                    assert(blocks_linear_size<blocks_linear_capacity); // Increase `blocks_linear_capacity` if it fires.
                                     Name_Alias_Num* const inserted = blocks.emplace(Name_Alias_Num{std::string(buf.data,buf.size),std::string(buf1.data,buf1.size),blocks_linear_size+1});
                                     blocks_linear[blocks_linear_size] = *inserted;
                                     blocks_by_alias.emplace(Alias_Num(*inserted));
@@ -604,9 +604,9 @@ Alias_Table::Alias_Table(std::string& dir_ucd) noexcept {
                             case ';':
                             case ' ':{
                                 assert(buf1.size==4);
-                                // Funnily "PropertyValueAliases.txt" defines the alias "Hrkt" for "Katakana_Or_Hiragana" but this script is not listed in "Scripts.txt". Probably this is a bug of "PropertyValueAliases.txt". Such mixed script classes should be removed after the so-called script-extension is adopted.
+                                // Funnily "PropertyValueAliases.txt" defines the alias "Hrkt" for "Katakana_Or_Hiragana" but this script is not listed in "Scripts.txt". Probably this is a bug.
                                 if((buf1.data[0]!='Z' || buf1.data[1]!='z') && (buf1.data[0]!='H' || buf1.data[1]!='r')){
-                                    assert(scripts_linear_size<scripts_linear_capacity);
+                                    assert(scripts_linear_size<scripts_linear_capacity); // Increase `scripts_linear_capacity` if it fires.
                                     if(Name_Alias_Num* const na_block=const_cast<Name_Alias_Num*>(blocks.find(std::string_view(buf1.data,buf1.size))); na_block){
                                         na_block->duplicated = true;
                                         Name_Alias_Num* const inserted = scripts.emplace(Name_Alias_Num{std::string(buf.data,buf.size),std::string(buf1.data,buf1.size),scripts_linear_size+1,true});
@@ -631,7 +631,7 @@ Alias_Table::Alias_Table(std::string& dir_ucd) noexcept {
                             case '\n':{
                                 assert(buf1.size==4);
                                 if((buf1.data[0]!='Z' || buf1.data[1]!='z') && (buf1.data[0]!='H' || buf1.data[1]!='r')){
-                                    assert(scripts_linear_size<scripts_linear_capacity);
+                                    assert(scripts_linear_size<scripts_linear_capacity); // Increase `scripts_linear_capacity` if it fires.
                                     if(Name_Alias_Num* const na_block=const_cast<Name_Alias_Num*>(blocks.find(std::string_view(buf1.data,buf1.size))); na_block){
                                         na_block->duplicated = true;
                                         Name_Alias_Num* const inserted = scripts.emplace(Name_Alias_Num{std::string(buf.data,buf.size),std::string(buf1.data,buf1.size),scripts_linear_size+1,true});
@@ -910,14 +910,14 @@ void scripts(std::string& dir_ucd,std::string& dir_h,std::string& dir_cpp){
         unsigned char size=0;
 
         void insert_back(const unsigned char sc){
-            assert(size<sizeof(storage));
+            assert(size<sizeof(storage)); // Increase `storage`'s extent if it fires.
             assert(size==0 || storage[size-1]<=sc);
             storage[size++]=sc;
         }
         //void insert(const unsigned char sc){
         //    unsigned char* const fg = yuki::first_greater(storage,storage+size,sc);
         //    if(fg==storage || *(fg-1)!=sc){
-        //        assert(size<sizeof(storage));
+        //        assert(size<sizeof(storage)); // Increase `storage`'s extent if it fires.
         //        yuki::move_overlap(fg+1,fg,(storage+size)-fg);
         //        *fg=sc;
         //        ++size;
@@ -926,7 +926,7 @@ void scripts(std::string& dir_ucd,std::string& dir_h,std::string& dir_cpp){
     };
 
     struct{
-        Scs storage[62];
+        Scs storage[63];
         unsigned size=0;
         unsigned max_scs_size=0;
 
@@ -942,7 +942,7 @@ void scripts(std::string& dir_ucd,std::string& dir_h,std::string& dir_cpp){
                 return false;
             };
             if(size==0 || !scs_eq(storage[size-1],scs)){
-                assert(size < sizeof(storage)/sizeof(Scs));
+                assert(size < sizeof(storage)/sizeof(Scs)); // Increase `storage`'s extent if it fires.
                 storage[size++]=scs;
                 if(scs.size>max_scs_size)
                     max_scs_size=scs.size;
@@ -958,9 +958,9 @@ void scripts(std::string& dir_ucd,std::string& dir_h,std::string& dir_cpp){
         unsigned size=0;
 
         void insert(const char32_t c,const char32_t scs_i){
+            assert(size < sizeof(storage)/sizeof(storage[0])); // Increase `storage`'s extent if it fires.
             auto* const fg = yuki::first_greater(storage,storage+size,c,[](const auto v){return v.c;},yuki::Less<char32_t>{});
             assert(fg==storage || (fg-1)->c!=c);
-            assert(size < sizeof(storage)/sizeof(storage[0]));
             yuki::move_overlap(fg+1,fg,(storage+size)-fg);
             fg->c = c;
             fg->scs_i = scs_i;
@@ -978,7 +978,7 @@ void scripts(std::string& dir_ucd,std::string& dir_h,std::string& dir_cpp){
         void insert(const unsigned sc,const yuki::CInterval<char32_t> ci){
             auto* const fg = yuki::first_greater(storage,storage+size,sc,[](const auto& v){return v.sc;},yuki::Less<unsigned>{});
             if(fg==storage || (fg-1)->sc!=sc){
-                assert(size < sizeof(storage)/sizeof(storage[0]));
+                assert(size < sizeof(storage)/sizeof(storage[0]));  // Increase `storage`'s extent if it fires.
                 yuki::move_overlap(fg+1,fg,(storage+size)-fg);
                 fg->sc = sc;
                 fg->cc.insert(ci);
@@ -1385,8 +1385,15 @@ void binary_properties(std::string& dir_ucd,std::string& dir_h,std::string& dir_
         buf.remove_trailing_spaces();
 
         const Name_Alias_Num* const nan = alias_table.properties.find(std::string_view(buf.data,buf.size));
+        if(!nan){
+            // There is one "Enumerated Property" in "DerivedCoreProperties.txt".
+            assert(buf.size>4 && buf.data[0]=='I' && buf.data[1]=='n' && buf.data[2]=='C' && buf.data[3]=='B' && buf.data[4]==';');
+            buf.size=0;
+            continue;
+        }
+        assert(nan->number!=0);
+
         buf.size=0;
-        assert(nan && nan->number!=0);
 
         if(nan->number!=cat){
             if(cat!=0){
@@ -1749,19 +1756,29 @@ int main(const int argc,const char*const*const argv){
     const Name_Alias_Num* const cham_blk = alias_table.blocks.find("Cham");
     const Name_Alias_Num* const cham_sc = alias_table.scripts.find("Cham");
     const Alias_Num cham_sc_sv = *alias_table.scripts_by_alias.find("Cham");
+    // Cham 41 1
     fprintf(stderr,"%s %u %u\n",cham_blk->alias.c_str(),cham_blk->number,static_cast<unsigned>(cham_blk->duplicated));
+    // Cham 22 1
     fprintf(stderr,"%s %u %u\n",cham_sc->alias.c_str(),cham_sc->number,static_cast<unsigned>(cham_sc->duplicated));
+    // Cham 22 1
     fprintf(stderr,"%s %u %u\n",cham_sc_sv.alias.data(),cham_sc_sv.number,static_cast<unsigned>(*cham_sc_sv.duplicated));
 
     const Alias_Num beng_sc_sv = *alias_table.scripts_by_alias.find("Beng");
+    // Beng 12 0
     fprintf(stderr,"%s %u %u\n",beng_sc_sv.alias.data(),beng_sc_sv.number,static_cast<unsigned>(*beng_sc_sv.duplicated));
 
     const Name_Alias_Num* const latn_sc = alias_table.scripts.find("Latin");
+    // Latn 70 0
+    // Note: "HrKt" is not recognized as an "atomic" script category by this program so there will be a seeming number-dismatch for all script categories after "HrKt".
     fprintf(stderr,"%s %u %u\n",latn_sc->alias.data(),latn_sc->number,static_cast<unsigned>(latn_sc->duplicated));
 
+    // ODI
     fprintf(stderr,"%s\n",alias_table.properties["Other_Default_Ignorable_Code_Point"].alias.c_str());
+    // Term
     fprintf(stderr,"%s\n",alias_table.properties["Terminal_Punctuation"].alias.c_str());
+    // 1 1
     fprintf(stderr,"%u %u\n",static_cast<unsigned>(alias_table.properties["Variation_Selector"].duplicated),static_cast<unsigned>(alias_table.properties["ID_Continue"].duplicated));
+    // 1 1
     fprintf(stderr,"%u %u\n",static_cast<unsigned>(*alias_table.blocks_by_alias["VS"].duplicated),static_cast<unsigned>(*alias_table.blocks_by_alias["IDC"].duplicated));
     }
     #endif

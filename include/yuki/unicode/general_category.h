@@ -4,7 +4,7 @@
 namespace yuki::unicode{
 
 extern const yuki::CInterval<char32_t> Cn[707];
-inline constexpr size_t Cn_total=825345;
+inline constexpr size_t Cn_total=824718;
 
 
 extern const yuki::CInterval<char32_t> Lu[646];
@@ -36,8 +36,8 @@ inline constexpr yuki::CInterval<char32_t> Lm[71]={
 inline constexpr size_t Lm_total=397;
 
 
-extern const yuki::CInterval<char32_t> Lo[510];
-inline constexpr size_t Lo_total=131612;
+extern const yuki::CInterval<char32_t> Lo[511];
+inline constexpr size_t Lo_total=132234;
 
 
 extern const yuki::CInterval<char32_t> Mn[346];
@@ -210,8 +210,8 @@ inline constexpr yuki::CInterval<char32_t> Sk[31]={
 inline constexpr size_t Sk_total=125;
 
 
-extern const yuki::CInterval<char32_t> So[184];
-inline constexpr size_t So_total=6634;
+extern const yuki::CInterval<char32_t> So[185];
+inline constexpr size_t So_total=6639;
 
 
 inline constexpr yuki::CInterval<char32_t> Pi[11]={
@@ -229,11 +229,11 @@ inline constexpr size_t Pf_total=10;
 
 
 extern const yuki::CInterval<char32_t> C[712];
-inline constexpr size_t C_total=965096;
+inline constexpr size_t C_total=964469;
 
 
-extern const yuki::CInterval<char32_t> L[659];
-inline constexpr size_t L_total=136104;
+extern const yuki::CInterval<char32_t> L[660];
+inline constexpr size_t L_total=136726;
 
 
 extern const yuki::CInterval<char32_t> M[310];
@@ -248,8 +248,8 @@ extern const yuki::CInterval<char32_t> P[191];
 inline constexpr size_t P_total=842;
 
 
-extern const yuki::CInterval<char32_t> S[232];
-inline constexpr size_t S_total=7770;
+extern const yuki::CInterval<char32_t> S[233];
+inline constexpr size_t S_total=7775;
 
 
 inline constexpr yuki::CInterval<char32_t> Z[8]={
