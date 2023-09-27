@@ -3,6 +3,7 @@
 #include<string>
 #include<cassert>
 #include<yuki/Interval.hpp>
+#include<yuki/print.hpp>
 
 constexpr char32_t UNICODE_TOTAL = 0x110000;
 
@@ -85,23 +86,16 @@ void write_c32(FILE* const out,const char32_t c){
 #endif
 
 void write_cc(FILE* const out,const yuki::IntegralCIs_OV<char32_t>& cc){
-    unsigned line_items=0;
-    for(const yuki::CInterval<char32_t> ci : cc){
-        if(line_items==0)
-            fputs(IND,out);
+    auto f0 = [out](){fputs(IND,out);};
+    auto f = [out](const yuki::CInterval<char32_t> ci){
         fputc(static_cast<unsigned char>('{'),out);
         write_c32(out,ci.lb);
         fputc(static_cast<unsigned char>(','),out);
         write_c32(out,ci.ub);
         fputs("},",out);
-        if(line_items==YUKI_UGEN_MAX_LINE_ITEMS-1){
-            fputc(static_cast<unsigned char>('\n'),out);
-            line_items=0;
-        }else
-            ++line_items;
-    }
-    if(line_items!=0)
-        fputc(static_cast<unsigned char>('\n'),out);
+    };
+    auto fend = [out](){fputc(static_cast<unsigned char>('\n'),out);};
+    yuki::ind_printfixed_newline(cc.begin(),cc.end(),0,YUKI_UGEN_MAX_LINE_ITEMS,f0,f,fend);
 }
 
 void write_cc(FILE* const out_h,FILE* const out_cpp,const char* const name,const yuki::IntegralCIs_OV<char32_t>& cc,const size_t total_cp,const size_t header_threshold){
@@ -124,19 +118,10 @@ void write_char_table(FILE* const out){
     #ifndef YUKI_UGEN_MAX_LINE_TINY_ITEMS
     #define YUKI_UGEN_MAX_LINE_TINY_ITEMS 32
     #endif
-    unsigned line_tiny_items=0;
-    for(unsigned i=0;i<char_table_max_nonzero+1;++i){
-        if(line_tiny_items==0)
-            fputs(IND,out);
-        fprintf(out,"%u,",static_cast<unsigned>(char_table[i]));
-        if(line_tiny_items==YUKI_UGEN_MAX_LINE_TINY_ITEMS-1){
-            fputc(static_cast<unsigned char>('\n'),out);
-            line_tiny_items=0;
-        }else
-            ++line_tiny_items;
-    }
-    if(line_tiny_items!=0)
-        fputc(static_cast<unsigned char>('\n'),out);
+    auto f0 = [out](){fputs(IND,out);};
+    auto f = [out](const unsigned char uc){fprintf(out,"%u,",static_cast<unsigned>(uc));};
+    auto fend = [out](){fputc(static_cast<unsigned char>('\n'),out);};
+    yuki::ind_printfixed_newline(char_table,char_table+(char_table_max_nonzero+1),0,YUKI_UGEN_MAX_LINE_TINY_ITEMS,f0,f,fend);
 }
 
 
@@ -480,8 +465,8 @@ struct Alias_Table{
     yuki::CHashTable_Str<Alias_Num,Name_Alias_Num::Alias,Name_Alias_Num::Nil,1024> scripts_by_alias;
     yuki::CHashTable_Str<Alias_Num,Name_Alias_Num::Alias,Name_Alias_Num::Nil,1024> blocks_by_alias;
 
-    static constexpr size_t blocks_linear_capacity = 328;
-    static constexpr size_t scripts_linear_capacity = 163;
+    static constexpr size_t blocks_linear_capacity = 328+1;
+    static constexpr size_t scripts_linear_capacity = 163+1;
     Alias_Num blocks_linear[blocks_linear_capacity];
     Alias_Num scripts_linear[scripts_linear_capacity];
     unsigned blocks_linear_size = 0;
@@ -493,6 +478,9 @@ struct Alias_Table{
 };
 
 Alias_Table::Alias_Table(std::string& dir_ucd) noexcept {
+    blocks_linear[blocks_linear_capacity-1].alias = "total_";
+    scripts_linear[scripts_linear_capacity-1].alias = "total_";
+
     const size_t dir_ucd_size = dir_ucd.size();
     dir_ucd.append("PropertyValueAliases.txt");
     FILE* const in = fopen(dir_ucd.c_str(),"r");
@@ -814,22 +802,16 @@ void write_enum_table(
         zero
     );
 
-    unsigned line_small_items=1;
-    for(unsigned i=0;i<ans_size;++i){
-        if(line_small_items==0)
-            fputs(IND,out_h);
-        fprintf(out_h,"%s,",ans[i].alias.data());
-        if(line_small_items==enum_line_max-1){
-            fputc(static_cast<unsigned char>('\n'),out_h);
-            line_small_items=0;
-        }else{
-            fputc(static_cast<unsigned char>(' '),out_h);
-            ++line_small_items;
-        }
+    {
+    auto f0 = [out_h](){fputs(IND,out_h);};
+    auto f = [out_h](const Alias_Num an){fprintf(out_h,"%s, ",an.alias.data());};
+    auto fend = [out_h](){fputc(static_cast<unsigned char>('\n'),out_h);};
+    yuki::ind_printfixed_newline(ans,ans+ans_size+1,1,enum_line_max,f0,f,fend);
     }
-    fprintf(out_h,"%stotal_\n}; // enum struct %s\n\n\n",line_small_items!=0?"":IND,enum_name);
 
-    line_small_items=1;
+    fprintf(out_h,"}; // enum struct %s\n\n\n",enum_name);
+
+    unsigned line_small_items=1;
     if(ans_size<=header_threshold){
         fprintf(out_h,
             "inline constexpr Name_CC_Num<%s> %s[%u]={\n"

@@ -57,4 +57,21 @@ inline void concat_file(FILE* const target,FILE* const source){
     while((c=fgetc(source))!=EOF)
         fputc(c,target);
 }
+
+template<typename It,typename F0,typename F,typename Fend>
+void ind_printfixed_newline(It b,const It e,const size_t start,const size_t line_limit,F0&& f0,F&& f,Fend&& fend){
+    size_t line_items=start;
+    for(;b!=e;++b){
+        if(line_items==0)
+            std::forward<F0>(f0)();
+        std::forward<F>(f)(*b);
+        if(line_items==(line_limit-1)){
+            std::forward<Fend>(fend)();
+            line_items=0;
+        }else
+            ++line_items;
+    }
+    if(line_items!=0)
+        std::forward<Fend>(fend)();
+}
 } // namespace yuki
